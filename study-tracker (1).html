@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevPath — Study Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --bg4: #22222f;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --text3: #5a5a72;
+    --accent: #7c6aff;
+    --accent2: #5e4fcc;
+    --green: #3ecf8e;
+    --green2: #1a7a4a;
+    --green3: #0d3d24;
+    --amber: #f5a623;
+    --amber2: #7a5210;
+    --red: #ff5c5c;
+    --red2: #7a2020;
+    --blue: #4da6ff;
+    --blue2: #1a4a7a;
+    --purple: #b47aff;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; }
+
+  /* NAV */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    background:rgba(10,10,15,0.92); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 32px; height:60px;
+  }
+  .nav-logo { font-family:var(--mono); font-weight:700; font-size:18px; color:var(--accent); letter-spacing:-0.5px; }
+  .nav-logo span { color:var(--text2); font-weight:400; }
+  .nav-links { display:flex; gap:4px; }
+  .nav-btn {
+    background:transparent; border:none; color:var(--text2); cursor:pointer;
+    font-family:var(--sans); font-size:13px; font-weight:500;
+    padding:8px 16px; border-radius:8px; transition:all 0.15s;
+    letter-spacing:0.3px;
+  }
+  .nav-btn:hover { color:var(--text); background:var(--bg3); }
+  .nav-btn.active { color:var(--accent); background:rgba(124,106,255,0.1); }
+  .nav-date { font-family:var(--mono); font-size:12px; color:var(--text3); }
+
+  /* PAGES */
+  .page { display:none; padding:80px 32px 40px; max-width:1400px; margin:0 auto; }
+  .page.active { display:block; }
+
+  /* HERO STRIP */
+  .page-header { margin-bottom:32px; }
+  .page-title { font-size:28px; font-weight:700; letter-spacing:-0.5px; margin-bottom:6px; }
+  .page-sub { color:var(--text2); font-size:14px; }
+
+  /* GRID LAYOUTS */
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .grid-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+
+  /* CARDS */
+  .card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:14px; padding:20px;
+  }
+  .card-label { font-size:11px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; color:var(--text3); margin-bottom:8px; }
+  .card-value { font-size:32px; font-weight:700; font-family:var(--mono); letter-spacing:-1px; }
+  .card-sub { font-size:12px; color:var(--text3); margin-top:4px; }
+
+  /* SCORE BADGE */
+  .score-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;
+    font-family:var(--mono);
+  }
+  .score-excellent { background:rgba(62,207,142,0.15); color:var(--green); border:1px solid rgba(62,207,142,0.3); }
+  .score-good { background:rgba(77,166,255,0.15); color:var(--blue); border:1px solid rgba(77,166,255,0.3); }
+  .score-weak { background:rgba(245,166,35,0.15); color:var(--amber); border:1px solid rgba(245,166,35,0.3); }
+  .score-miss { background:rgba(255,92,92,0.15); color:var(--red); border:1px solid rgba(255,92,92,0.3); }
+
+  /* SECTION HEADERS */
+  .section-title { font-size:15px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .dot-green { background:var(--green); }
+  .dot-amber { background:var(--amber); }
+  .dot-blue { background:var(--blue); }
+  .dot-purple { background:var(--purple); }
+  .dot-red { background:var(--red); }
+
+  /* TABLE */
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; padding:10px 14px; color:var(--text3); font-weight:600; font-size:11px; letter-spacing:0.8px; text-transform:uppercase; border-bottom:1px solid var(--border); }
+  td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  .table-wrap { background:var(--bg2); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+
+  /* DIFFICULTY PILLS */
+  .pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; font-family:var(--mono); }
+  .pill-easy { background:rgba(62,207,142,0.15); color:var(--green); }
+  .pill-med { background:rgba(245,166,35,0.15); color:var(--amber); }
+  .pill-hard { background:rgba(255,92,92,0.15); color:var(--red); }
+
+  /* STATUS BADGES */
+  .status { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+  .status-ns { background:var(--bg3); color:var(--text3); }
+  .status-attempted { background:rgba(245,166,35,0.15); color:var(--amber); }
+  .status-solved { background:rgba(62,207,142,0.15); color:var(--green); }
+  .status-revised { background:rgba(124,106,255,0.15); color:var(--accent); }
+
+  /* FORM ELEMENTS */
+  input[type=text], input[type=number], textarea, select {
+    background:var(--bg3); border:1px solid var(--border);
+    color:var(--text); font-family:var(--sans); font-size:14px;
+    padding:10px 14px; border-radius:10px; width:100%;
+    outline:none; transition:border 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color:var(--accent); }
+  select option { background:var(--bg3); }
+
+  /* CHECKBOX TOGGLE */
+  .toggle-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 0; border-bottom:1px solid var(--border);
+  }
+  .toggle-row:last-child { border-bottom:none; }
+  .toggle-label { font-size:14px; font-weight:500; }
+  .toggle-sub { font-size:12px; color:var(--text3); margin-top:2px; }
+  .toggle {
+    width:44px; height:24px; background:var(--bg4); border-radius:12px;
+    cursor:pointer; position:relative; transition:background 0.2s; flex-shrink:0;
+    border:1px solid var(--border2);
+  }
+  .toggle::after {
+    content:''; position:absolute; top:3px; left:3px;
+    width:16px; height:16px; border-radius:50%; background:var(--text3);
+    transition:all 0.2s;
+  }
+  .toggle.on { background:var(--accent); border-color:var(--accent); }
+  .toggle.on::after { left:23px; background:#fff; }
+
+  /* PROGRESS BAR */
+  .prog-bar { height:6px; background:var(--bg4); border-radius:3px; overflow:hidden; }
+  .prog-fill { height:100%; border-radius:3px; transition:width 0.5s ease; }
+  .prog-green { background:var(--green); }
+  .prog-amber { background:var(--amber); }
+  .prog-blue { background:var(--blue); }
+  .prog-purple { background:var(--purple); }
+
+  /* BUTTON */
+  .btn {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 20px; border-radius:10px; border:none;
+    cursor:pointer; font-family:var(--sans); font-size:14px; font-weight:600;
+    transition:all 0.15s; letter-spacing:0.2px;
+  }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:var(--accent2); }
+  .btn-ghost { background:var(--bg3); color:var(--text2); border:1px solid var(--border); }
+  .btn-ghost:hover { color:var(--text); border-color:var(--border2); }
+  .btn-danger { background:rgba(255,92,92,0.1); color:var(--red); border:1px solid rgba(255,92,92,0.2); }
+  .btn-sm { padding:6px 14px; font-size:12px; border-radius:8px; }
+
+  /* LINK */
+  a.lc-link { color:var(--blue); text-decoration:none; font-family:var(--mono); font-size:12px; }
+  a.lc-link:hover { text-decoration:underline; }
+
+  /* CHART BAR */
+  .mini-bars { display:flex; align-items:flex-end; gap:4px; height:60px; }
+  .mini-bar { flex:1; border-radius:3px 3px 0 0; min-height:3px; transition:height 0.3s; cursor:pointer; position:relative; }
+  .mini-bar:hover::after {
+    content:attr(data-tip);
+    position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%);
+    background:var(--bg4); color:var(--text); font-size:10px; padding:3px 7px;
+    border-radius:6px; white-space:nowrap; pointer-events:none;
+    border:1px solid var(--border2);
+  }
+
+  /* DIVIDER */
+  .divider { height:1px; background:var(--border); margin:24px 0; }
+
+  /* ROADMAP ITEM */
+  .roadmap-item {
+    display:flex; gap:16px; padding:14px 0; border-bottom:1px solid var(--border);
+    align-items:flex-start;
+  }
+  .roadmap-item:last-child { border-bottom:none; }
+  .roadmap-day { font-family:var(--mono); font-size:11px; color:var(--text3); min-width:48px; padding-top:3px; }
+  .roadmap-content { flex:1; }
+  .roadmap-title { font-size:14px; font-weight:500; margin-bottom:4px; }
+  .roadmap-task { font-size:12px; color:var(--text2); }
+  .roadmap-check { width:22px; height:22px; border-radius:6px; border:1.5px solid var(--border2); cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+  .roadmap-check.done { background:var(--green); border-color:var(--green); color:#fff; font-size:12px; }
+
+  /* APT TOPIC */
+  .topic-card {
+    background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+    padding:16px; cursor:pointer; transition:all 0.15s;
+  }
+  .topic-card:hover { border-color:var(--border2); }
+  .topic-card.active-topic { border-color:var(--accent); background:rgba(124,106,255,0.07); }
+  .topic-name { font-size:13px; font-weight:600; margin-bottom:4px; }
+  .topic-count { font-size:11px; color:var(--text3); font-family:var(--mono); }
+
+  /* DAILY LOG FORM */
+  .log-form { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:24px; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-label { font-size:12px; font-weight:600; color:var(--text2); margin-bottom:6px; letter-spacing:0.5px; }
+
+  /* STREAK */
+  .streak-num { font-family:var(--mono); font-size:48px; font-weight:700; color:var(--amber); letter-spacing:-2px; line-height:1; }
+  .streak-label { font-size:12px; color:var(--text3); margin-top:6px; }
+
+  /* TABS */
+  .tabs { display:flex; gap:4px; background:var(--bg3); border-radius:10px; padding:4px; margin-bottom:20px; width:fit-content; }
+  .tab { padding:8px 18px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text2); transition:all 0.15s; }
+  .tab.active { background:var(--bg); color:var(--text); }
+
+  /* TOAST */
+  #toast {
+    position:fixed; bottom:24px; right:24px; background:var(--bg4);
+    border:1px solid var(--border2); color:var(--text); padding:12px 20px;
+    border-radius:12px; font-size:14px; font-weight:500;
+    transform:translateY(80px); opacity:0; transition:all 0.3s; z-index:999;
+  }
+  #toast.show { transform:translateY(0); opacity:1; }
+
+  @media(max-width:900px) {
+    .grid-4 { grid-template-columns:repeat(2,1fr); }
+    .grid-5 { grid-template-columns:repeat(2,1fr); }
+    .grid-3 { grid-template-columns:1fr; }
+    .grid-2 { grid-template-columns:1fr; }
+    .form-grid { grid-template-columns:1fr; }
+    nav { padding:0 16px; }
+    .page { padding:80px 16px 40px; }
+  }
+
+  /* HEATMAP */
+  .heatmap { display:flex; gap:3px; flex-wrap:wrap; }
+  .hm-cell {
+    width:14px; height:14px; border-radius:3px; background:var(--bg4);
+    cursor:pointer; position:relative;
+  }
+  .hm-cell:hover::after {
+    content:attr(data-tip); position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%);
+    background:var(--bg4); color:var(--text); font-size:10px; padding:3px 7px;
+    border-radius:6px; white-space:nowrap; pointer-events:none; border:1px solid var(--border2); z-index:10;
+  }
+  .hm-1 { background:rgba(62,207,142,0.2); } .hm-2 { background:rgba(62,207,142,0.4); }
+  .hm-3 { background:rgba(62,207,142,0.6); } .hm-4 { background:rgba(62,207,142,0.85); }
+
+  /* POMODORO */
+  .pomo-overlay {
+    display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center;
+  }
+  .pomo-overlay.active { display:flex; }
+  .pomo-box {
+    background:var(--bg2); border:1px solid var(--border); border-radius:20px;
+    padding:40px 50px; text-align:center; max-width:400px;
+  }
+  .pomo-time { font-family:var(--mono); font-size:64px; font-weight:700; letter-spacing:-2px; }
+  .pomo-label { font-size:14px; color:var(--text2); margin:8px 0 24px; }
+
+  /* SMART SUGGEST */
+  .suggest-card {
+    background:linear-gradient(135deg, rgba(124,106,255,0.12), rgba(62,207,142,0.08));
+    border:1px solid rgba(124,106,255,0.25); border-radius:14px; padding:20px;
+    margin-bottom:20px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Dev<span>Path</span></div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-btn" onclick="showPage('leetcode')">LeetCode</button>
+    <button class="nav-btn" onclick="showPage('aiml')">AI/ML</button>
+    <button class="nav-btn" onclick="showPage('aptitude')">Aptitude</button>
+    <button class="nav-btn" onclick="showPage('linkedin')">LinkedIn</button>
+    <button class="nav-btn" onclick="showPage('daily')">Daily Log</button>
+  </div>
+  <div class="nav-date" id="nav-date"></div>
+</nav>
+
+<div id="toast"></div>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+
+<!-- POMODORO OVERLAY -->
+<div class="pomo-overlay" id="pomo-overlay">
+  <div class="pomo-box">
+    <div class="pomo-time" id="pomo-time">25:00</div>
+    <div class="pomo-label" id="pomo-label">Focus Session</div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-primary" id="pomo-start" onclick="pomoToggle()">▶ Start</button>
+      <button class="btn btn-ghost" onclick="pomoReset()">↻ Reset</button>
+      <button class="btn btn-ghost" onclick="pomoClose()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== DASHBOARD ======================== -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;">
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Your complete progress at a glance</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-sm btn-ghost" onclick="startPomo()">🍅 Pomodoro</button>
+      <button class="btn btn-sm btn-ghost" onclick="exportData()">📥 Export</button>
+      <button class="btn btn-sm btn-ghost" onclick="document.getElementById('import-file').click()">📤 Import</button>
+    </div>
+  </div>
+
+  <!-- SMART DAILY SUGGESTION -->
+  <div class="suggest-card" id="daily-suggest"></div>
+
+  <div class="grid-5" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-label">Total Days</div>
+      <div class="card-value" id="d-total-days">0</div>
+      <div class="card-sub">logged so far</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Avg Score</div>
+      <div class="card-value" id="d-avg-score">0</div>
+      <div class="card-sub">out of 11 pts</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Streak</div>
+      <div class="streak-num" id="d-streak">0</div>
+      <div class="streak-label">🔥 days</div>
+    </div>
+    <div class="card">
+      <div class="card-label">LC Solved</div>
+      <div class="card-value" id="d-lc-solved" style="color:var(--green)">0</div>
+      <div class="card-sub">of 450 target</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Consistency</div>
+      <div class="card-value" id="d-consistency">0%</div>
+      <div class="card-sub">days ≥ 6pts</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="section-title"><span class="dot dot-purple"></span> Score History (Last 14 Days)</div>
+      <div class="mini-bars" id="score-chart"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;">
+        <span style="font-size:11px;color:var(--text3)">older</span>
+        <span style="font-size:11px;color:var(--text3)">today</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span class="dot dot-green"></span> Task Completion Breakdown</div>
+      <div id="task-breakdown"></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="section-title"><span class="dot dot-amber"></span> Today's Goals</div>
+      <div id="today-goals"></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span class="dot dot-blue"></span> LeetCode Progress</div>
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;">Total Progress</span>
+          <span style="font-family:var(--mono);font-size:13px;" id="lc-prog-txt">0/450</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill prog-green" id="lc-prog-bar" style="width:0%"></div></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;">Easy</span>
+          <span style="font-family:var(--mono);font-size:13px;" id="lc-easy-txt">0</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill prog-green" id="lc-easy-bar" style="width:0%"></div></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;">Medium</span>
+          <span style="font-family:var(--mono);font-size:13px;" id="lc-med-txt">0</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill prog-amber" id="lc-med-bar" style="width:0%"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;">Hard</span>
+          <span style="font-family:var(--mono);font-size:13px;" id="lc-hard-txt">0</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill prog-purple" id="lc-hard-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span class="dot dot-green"></span> AIML Roadmap (6 Months)</div>
+      <div id="dash-aiml-progress"></div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY HEATMAP -->
+  <div class="card" style="margin-top:20px;">
+    <div class="section-title"><span class="dot dot-green"></span> Activity Heatmap (Last 90 Days)</div>
+    <div class="heatmap" id="heatmap"></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:10px;">
+      <span style="font-size:10px;color:var(--text3);">Less</span>
+      <div class="hm-cell" style="background:var(--bg4);"></div>
+      <div class="hm-cell hm-1"></div>
+      <div class="hm-cell hm-2"></div>
+      <div class="hm-cell hm-3"></div>
+      <div class="hm-cell hm-4"></div>
+      <span style="font-size:10px;color:var(--text3);">More</span>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== LEETCODE ======================== -->
+<div class="page" id="page-leetcode">
+  <div class="page-header">
+    <div class="page-title">LeetCode Planner</div>
+    <div class="page-sub">450 problems — 2-year structured journey (exam break: 20 Apr – 20 May)</div>
+  </div>
+
+  <div class="grid-4" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-label">Solved</div>
+      <div class="card-value" id="lc-solved-count" style="color:var(--green)">0</div>
+      <div class="card-sub">of 450</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Revised</div>
+      <div class="card-value" id="lc-revised-count" style="color:var(--accent)">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">In Progress</div>
+      <div class="card-value" id="lc-attempted-count" style="color:var(--amber)">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Days Left</div>
+      <div class="card-value" id="lc-days-left" style="color:var(--text2)">300</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <input type="text" id="lc-search" placeholder="Search problems..." oninput="filterLC()">
+      </div>
+      <select id="lc-filter-diff" onchange="filterLC()" style="width:140px;">
+        <option value="">All Difficulty</option>
+        <option value="Easy">Easy</option>
+        <option value="Medium">Medium</option>
+        <option value="Hard">Hard</option>
+      </select>
+      <select id="lc-filter-topic" onchange="filterLC()" style="width:160px;">
+        <option value="">All Topics</option>
+        <option>Arrays</option>
+        <option>Strings</option>
+        <option>Hashing</option>
+        <option>Two Pointers</option>
+        <option>Sliding Window</option>
+        <option>Recursion</option>
+        <option>Stack</option>
+        <option>Queue</option>
+        <option>Linked List</option>
+        <option>Binary Search</option>
+        <option>Trees</option>
+        <option>Graphs</option>
+        <option>DP</option>
+        <option>Greedy</option>
+        <option>Backtracking</option>
+        <option>Heap</option>
+        <option>Trie</option>
+        <option>Math</option>
+      </select>
+      <select id="lc-filter-status" onchange="filterLC()" style="width:150px;">
+        <option value="">All Status</option>
+        <option value="Not Started">Not Started</option>
+        <option value="Attempted">Attempted</option>
+        <option value="Solved">Solved</option>
+        <option value="Revised">Revised</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px">#</th>
+          <th>Problem</th>
+          <th style="width:100px">Difficulty</th>
+          <th style="width:140px">Topic</th>
+          <th style="width:50px">Day</th>
+          <th style="width:130px">Status</th>
+        </tr>
+      </thead>
+      <tbody id="lc-table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ======================== AI/ML ======================== -->
+<div class="page" id="page-aiml">
+  <div class="page-header">
+    <div class="page-title">AI/ML Roadmap</div>
+    <div class="page-sub">NumPy → Complete ML in 6 months — systematic learning path</div>
+  </div>
+
+  <div class="grid-4" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-label">Topics Done</div>
+      <div class="card-value" id="aiml-done-count" style="color:var(--green)">0</div>
+      <div class="card-sub">of 180 topics</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Phase</div>
+      <div class="card-value" id="aiml-phase-name" style="font-size:18px;color:var(--accent)">Python</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Month</div>
+      <div class="card-value" id="aiml-week-num">1</div>
+      <div class="card-sub">of 6</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Completion</div>
+      <div class="card-value" id="aiml-pct">0%</div>
+    </div>
+  </div>
+
+  <div class="tabs" id="aiml-tabs" style="flex-wrap:wrap;">
+    <div class="tab active" onclick="switchAimlPhase(0,this)">Python & Math</div>
+    <div class="tab" onclick="switchAimlPhase(1,this)">Data Science</div>
+    <div class="tab" onclick="switchAimlPhase(2,this)">Classical ML</div>
+    <div class="tab" onclick="switchAimlPhase(3,this)">Adv ML & NLP</div>
+    <div class="tab" onclick="switchAimlPhase(4,this)">Deep Learning</div>
+    <div class="tab" onclick="switchAimlPhase(5,this)">GenAI & Ops</div>
+  </div>
+
+  <div class="card" id="aiml-phase-content"></div>
+</div>
+
+<!-- ======================== APTITUDE ======================== -->
+<div class="page" id="page-aptitude">
+  <div class="page-header">
+    <div class="page-title">Aptitude Tracker</div>
+    <div class="page-sub">10 questions daily — Speed/Distance/Time, Clocks, Sets mastery in 1–2 months</div>
+  </div>
+
+  <div class="grid-4" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-label">Total Solved</div>
+      <div class="card-value" id="apt-total" style="color:var(--green)">0</div>
+      <div class="card-sub">questions</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Today</div>
+      <div class="card-value" id="apt-today">0</div>
+      <div class="card-sub">of 10 target</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Days Streak</div>
+      <div class="card-value" id="apt-streak" style="color:var(--amber)">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Topics Covered</div>
+      <div class="card-value" id="apt-topics-done">0</div>
+      <div class="card-sub">of 6 core</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-title"><span class="dot dot-amber"></span> Core Topics — Priority Order</div>
+      <div id="apt-topics-grid"></div>
+    </div>
+    <div>
+      <div class="section-title"><span class="dot dot-blue"></span> Today's Practice Log</div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="form-label">Topic</div>
+        <select id="apt-log-topic" style="margin-bottom:12px;">
+          <option>Speed, Distance & Time</option>
+          <option>Time & Work</option>
+          <option>Clocks & Calendars</option>
+          <option>Set Theory / Venn Diagrams</option>
+          <option>Ratios & Proportions</option>
+          <option>Percentages</option>
+          <option>Profit & Loss</option>
+          <option>Averages & Mixtures</option>
+          <option>Permutations & Combinations</option>
+          <option>Probability</option>
+          <option>Number Systems</option>
+          <option>Algebra</option>
+        </select>
+        <div class="form-label">Questions Attempted Today</div>
+        <input type="number" id="apt-log-count" min="0" max="50" placeholder="e.g. 10" style="margin-bottom:12px;">
+        <div class="form-label">Notes (optional)</div>
+        <textarea id="apt-log-notes" rows="2" placeholder="e.g. Struggling with relative speed..." style="margin-bottom:12px;resize:vertical;"></textarea>
+        <button class="btn btn-primary" onclick="logAptitude()">Log Today's Practice</button>
+      </div>
+      <div class="section-title"><span class="dot dot-purple"></span> Recent Logs</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Topic</th><th>Qs</th><th>Notes</th></tr></thead>
+          <tbody id="apt-log-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-title"><span class="dot dot-green"></span> Resource Links — Practice Sites</div>
+  <div class="grid-3" id="apt-resources"></div>
+  <div class="divider"></div>
+  <div class="section-title"><span class="dot dot-red"></span> YouTube Channels & Documentation</div>
+  <div class="grid-3" id="apt-yt-resources"></div>
+</div>
+
+<!-- ======================== LINKEDIN ======================== -->
+<div class="page" id="page-linkedin">
+  <div class="page-header">
+    <div class="page-title">LinkedIn Post Generator</div>
+    <div class="page-sub">90 days of curated, optimized posts — just copy, paste & post</div>
+  </div>
+  <div class="grid-4" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-label">Posts Ready</div>
+      <div class="card-value" style="color:var(--blue)" id="li-total">90</div>
+      <div class="card-sub">curated posts</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Posted</div>
+      <div class="card-value" style="color:var(--green)" id="li-posted">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Today's Post</div>
+      <div class="card-value" style="font-size:18px;color:var(--accent)" id="li-today-label">Day 1</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Streak</div>
+      <div class="card-value" style="color:var(--amber)" id="li-streak">0</div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <select id="li-filter-week" onchange="filterLinkedin()" style="width:200px;">
+        <option value="">All Weeks</option>
+        <option value="1">Week 1-2</option><option value="3">Week 3-4</option>
+        <option value="5">Week 5-6</option><option value="7">Week 7-8</option>
+        <option value="9">Week 9-10</option><option value="11">Week 11-12</option>
+      </select>
+      <select id="li-filter-type" onchange="filterLinkedin()" style="width:200px;">
+        <option value="">All Types</option>
+        <option value="aiml">AI/ML Focus</option><option value="dsa">DSA Focus</option>
+        <option value="reflection">Reflection</option><option value="resource">Resource Share</option>
+      </select>
+    </div>
+  </div>
+  <div id="li-posts-list"></div>
+</div>
+
+<!-- ======================== DAILY LOG ======================== -->
+<div class="page" id="page-daily">
+  <div class="page-header">
+    <div class="page-title">Daily Log</div>
+    <div class="page-sub">Track every session — consistency beats perfection</div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="log-form">
+      <div class="section-title"><span class="dot dot-green"></span> Log Today's Work</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text3);margin-bottom:16px;" id="log-date-display"></div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">LeetCode</div>
+          <div class="toggle-sub">+3 pts — Solve today's problem</div>
+        </div>
+        <div class="toggle on" id="tog-lc" onclick="toggleTask(this)"></div>
+      </div>
+      <div style="padding:8px 0 4px;" id="lc-detail-row">
+        <input type="text" id="lc-problem-name" placeholder="Problem name..." style="margin-bottom:8px;">
+        <select id="lc-problem-diff" style="margin-bottom:0;">
+          <option>Easy</option>
+          <option selected>Medium</option>
+          <option>Hard</option>
+        </select>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Syntax Practice</div>
+          <div class="toggle-sub">+2 pts — Rewrite yesterday's code</div>
+        </div>
+        <div class="toggle" id="tog-syntax" onclick="toggleTask(this)"></div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Aptitude (10 Qs)</div>
+          <div class="toggle-sub">+2 pts — Timed practice session</div>
+        </div>
+        <div class="toggle" id="tog-apt" onclick="toggleTask(this)"></div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">AI/ML Study</div>
+          <div class="toggle-sub">+2 pts — Follow roadmap topic</div>
+        </div>
+        <div class="toggle" id="tog-aiml" onclick="toggleTask(this)"></div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">GitHub Push</div>
+          <div class="toggle-sub">+1 pt — Even a small commit counts</div>
+        </div>
+        <div class="toggle" id="tog-gh" onclick="toggleTask(this)"></div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">LinkedIn Post</div>
+          <div class="toggle-sub">+1 pt — 2–3× per week is enough</div>
+        </div>
+        <div class="toggle" id="tog-li" onclick="toggleTask(this)"></div>
+      </div>
+
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div class="form-label">Today's Score</div>
+          <div style="font-family:var(--mono);font-size:28px;font-weight:700;" id="live-score">3</div>
+        </div>
+        <div id="live-badge"></div>
+      </div>
+
+      <div class="form-label" style="margin-bottom:6px;">Notes / Blockers</div>
+      <textarea id="log-notes" rows="2" placeholder="What went well? What's blocking you?" style="margin-bottom:16px;resize:vertical;"></textarea>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="saveLog()" style="flex:1;">Save Today's Log</button>
+        <button class="btn btn-ghost" onclick="clearLog()">Clear</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title"><span class="dot dot-purple"></span> Today's Schedule</div>
+      <div class="card" style="margin-bottom:20px;">
+        <div id="schedule-list"></div>
+      </div>
+      <div class="section-title"><span class="dot dot-amber"></span> Score Legend</div>
+      <div class="card">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:14px;">🔥 Excellent</span>
+            <span class="score-badge score-excellent">9–11 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:14px;">👍 Good</span>
+            <span class="score-badge score-good">6–8 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:14px;">⚠️ Weak</span>
+            <span class="score-badge score-weak">3–5 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:14px;">❌ Missed</span>
+            <span class="score-badge score-miss">0–2 pts</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="dot dot-blue"></span> Log History</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>LeetCode</th>
+          <th>Difficulty</th>
+          <th>Syntax</th>
+          <th>Aptitude</th>
+          <th>AI/ML</th>
+          <th>GitHub</th>
+          <th>LinkedIn</th>
+          <th>Score</th>
+          <th>Level</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="log-history-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const STORAGE_KEY = 'devpath_v3';
+
+// JOURNEY CONFIG
+const JOURNEY = {
+  startDate: new Date(2026, 2, 24), // March 24, 2026
+  endDate: new Date(2028, 2, 24),   // March 24, 2028 (2 years)
+  examBreak: { start: new Date(2026, 3, 20), end: new Date(2026, 4, 20) }, // Apr 20 – May 20, 2026
+};
+
+function getStudyDay() {
+  const now = new Date();
+  const start = JOURNEY.startDate;
+  const breakStart = JOURNEY.examBreak.start;
+  const breakEnd = JOURNEY.examBreak.end;
+  if (now < start) return 0;
+  if (now >= breakStart && now < breakEnd) return -1; // on break
+  let days = Math.floor((now - start) / 86400000);
+  if (now >= breakEnd) {
+    const breakDays = Math.floor((breakEnd - breakStart) / 86400000);
+    days -= breakDays;
+  }
+  return Math.max(1, days + 1);
+}
+
+function isOnExamBreak() {
+  const now = new Date();
+  return now >= JOURNEY.examBreak.start && now < JOURNEY.examBreak.end;
+}
+
+function getDaysUntilEnd() {
+  const now = new Date();
+  const remaining = Math.ceil((JOURNEY.endDate - now) / 86400000);
+  return Math.max(0, remaining);
+}
+
+function getJourneyProgress() {
+  const total = Math.floor((JOURNEY.endDate - JOURNEY.startDate) / 86400000);
+  const elapsed = Math.floor((new Date() - JOURNEY.startDate) / 86400000);
+  return Math.min(100, Math.max(0, Math.round(elapsed / total * 100)));
+}
+
+let data = {
+  logs: [],
+  lcStatus: {},
+  aimlDone: {},
+  aptLogs: [],
+  startDate: JOURNEY.startDate.toDateString()
+};
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function load() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) { try { data = JSON.parse(raw); } catch(e){} }
+}
+load();
+
+// ===================== LEETCODE DATA =====================
+const LC_PROBLEMS = [
+  // ARRAYS (Days 1-30)
+  {day:1,name:'Two Sum',link:'https://leetcode.com/problems/two-sum/',diff:'Easy',topic:'Arrays'},
+  {day:2,name:'Remove Duplicates from Sorted Array',link:'https://leetcode.com/problems/remove-duplicates-from-sorted-array/',diff:'Easy',topic:'Arrays'},
+  {day:3,name:'Contains Duplicate',link:'https://leetcode.com/problems/contains-duplicate/',diff:'Easy',topic:'Arrays'},
+  {day:4,name:'Move Zeroes',link:'https://leetcode.com/problems/move-zeroes/',diff:'Easy',topic:'Arrays'},
+  {day:5,name:'Intersection of Two Arrays',link:'https://leetcode.com/problems/intersection-of-two-arrays/',diff:'Easy',topic:'Arrays'},
+  {day:6,name:'Best Time to Buy and Sell Stock',link:'https://leetcode.com/problems/best-time-to-buy-and-sell-stock/',diff:'Easy',topic:'Arrays'},
+  {day:7,name:'Max Subarray (Kadane\'s)',link:'https://leetcode.com/problems/maximum-subarray/',diff:'Medium',topic:'Arrays'},
+  {day:8,name:'Product of Array Except Self',link:'https://leetcode.com/problems/product-of-array-except-self/',diff:'Medium',topic:'Arrays'},
+  {day:9,name:'3Sum',link:'https://leetcode.com/problems/3sum/',diff:'Medium',topic:'Arrays'},
+  {day:10,name:'Container With Most Water',link:'https://leetcode.com/problems/container-with-most-water/',diff:'Medium',topic:'Arrays'},
+  // STRINGS (Days 11-25)
+  {day:11,name:'Valid Anagram',link:'https://leetcode.com/problems/valid-anagram/',diff:'Easy',topic:'Strings'},
+  {day:12,name:'Reverse String',link:'https://leetcode.com/problems/reverse-string/',diff:'Easy',topic:'Strings'},
+  {day:13,name:'First Unique Character in a String',link:'https://leetcode.com/problems/first-unique-character-in-a-string/',diff:'Easy',topic:'Strings'},
+  {day:14,name:'Valid Palindrome',link:'https://leetcode.com/problems/valid-palindrome/',diff:'Easy',topic:'Strings'},
+  {day:15,name:'Longest Common Prefix',link:'https://leetcode.com/problems/longest-common-prefix/',diff:'Easy',topic:'Strings'},
+  {day:16,name:'Longest Substring Without Repeating Characters',link:'https://leetcode.com/problems/longest-substring-without-repeating-characters/',diff:'Medium',topic:'Strings'},
+  {day:17,name:'Group Anagrams',link:'https://leetcode.com/problems/group-anagrams/',diff:'Medium',topic:'Strings'},
+  {day:18,name:'Minimum Window Substring',link:'https://leetcode.com/problems/minimum-window-substring/',diff:'Hard',topic:'Strings'},
+  {day:19,name:'String to Integer (atoi)',link:'https://leetcode.com/problems/string-to-integer-atoi/',diff:'Medium',topic:'Strings'},
+  {day:20,name:'Count and Say',link:'https://leetcode.com/problems/count-and-say/',diff:'Medium',topic:'Strings'},
+  // HASHING (Days 21-35)
+  {day:21,name:'Two Sum II',link:'https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/',diff:'Medium',topic:'Hashing'},
+  {day:22,name:'Top K Frequent Elements',link:'https://leetcode.com/problems/top-k-frequent-elements/',diff:'Medium',topic:'Hashing'},
+  {day:23,name:'Subarray Sum Equals K',link:'https://leetcode.com/problems/subarray-sum-equals-k/',diff:'Medium',topic:'Hashing'},
+  {day:24,name:'Longest Consecutive Sequence',link:'https://leetcode.com/problems/longest-consecutive-sequence/',diff:'Medium',topic:'Hashing'},
+  {day:25,name:'Find All Anagrams in String',link:'https://leetcode.com/problems/find-all-anagrams-in-a-string/',diff:'Medium',topic:'Hashing'},
+  // TWO POINTERS (Days 26-40)
+  {day:26,name:'Squares of Sorted Array',link:'https://leetcode.com/problems/squares-of-a-sorted-array/',diff:'Easy',topic:'Two Pointers'},
+  {day:27,name:'Sort Colors',link:'https://leetcode.com/problems/sort-colors/',diff:'Medium',topic:'Two Pointers'},
+  {day:28,name:'Remove Nth Node From End',link:'https://leetcode.com/problems/remove-nth-node-from-end-of-list/',diff:'Medium',topic:'Two Pointers'},
+  {day:29,name:'Trapping Rain Water',link:'https://leetcode.com/problems/trapping-rain-water/',diff:'Hard',topic:'Two Pointers'},
+  {day:30,name:'4Sum',link:'https://leetcode.com/problems/4sum/',diff:'Medium',topic:'Two Pointers'},
+  // SLIDING WINDOW (Days 31-45)
+  {day:31,name:'Maximum Average Subarray I',link:'https://leetcode.com/problems/maximum-average-subarray-i/',diff:'Easy',topic:'Sliding Window'},
+  {day:32,name:'Fruit Into Baskets',link:'https://leetcode.com/problems/fruit-into-baskets/',diff:'Medium',topic:'Sliding Window'},
+  {day:33,name:'Permutation in String',link:'https://leetcode.com/problems/permutation-in-string/',diff:'Medium',topic:'Sliding Window'},
+  {day:34,name:'Longest Repeating Character Replacement',link:'https://leetcode.com/problems/longest-repeating-character-replacement/',diff:'Medium',topic:'Sliding Window'},
+  {day:35,name:'Sliding Window Maximum',link:'https://leetcode.com/problems/sliding-window-maximum/',diff:'Hard',topic:'Sliding Window'},
+  // BINARY SEARCH (Days 36-55)
+  {day:36,name:'Binary Search',link:'https://leetcode.com/problems/binary-search/',diff:'Easy',topic:'Binary Search'},
+  {day:37,name:'First Bad Version',link:'https://leetcode.com/problems/first-bad-version/',diff:'Easy',topic:'Binary Search'},
+  {day:38,name:'Search Insert Position',link:'https://leetcode.com/problems/search-insert-position/',diff:'Easy',topic:'Binary Search'},
+  {day:39,name:'Find Minimum in Rotated Sorted Array',link:'https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/',diff:'Medium',topic:'Binary Search'},
+  {day:40,name:'Search in Rotated Sorted Array',link:'https://leetcode.com/problems/search-in-rotated-sorted-array/',diff:'Medium',topic:'Binary Search'},
+  {day:41,name:'Kth Smallest in Matrix',link:'https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/',diff:'Medium',topic:'Binary Search'},
+  {day:42,name:'Median of Two Sorted Arrays',link:'https://leetcode.com/problems/median-of-two-sorted-arrays/',diff:'Hard',topic:'Binary Search'},
+  // STACK & QUEUE (Days 43-60)
+  {day:43,name:'Valid Parentheses',link:'https://leetcode.com/problems/valid-parentheses/',diff:'Easy',topic:'Stack'},
+  {day:44,name:'Min Stack',link:'https://leetcode.com/problems/min-stack/',diff:'Medium',topic:'Stack'},
+  {day:45,name:'Daily Temperatures',link:'https://leetcode.com/problems/daily-temperatures/',diff:'Medium',topic:'Stack'},
+  {day:46,name:'Evaluate Reverse Polish Notation',link:'https://leetcode.com/problems/evaluate-reverse-polish-notation/',diff:'Medium',topic:'Stack'},
+  {day:47,name:'Largest Rectangle in Histogram',link:'https://leetcode.com/problems/largest-rectangle-in-histogram/',diff:'Hard',topic:'Stack'},
+  {day:48,name:'Implement Queue Using Stacks',link:'https://leetcode.com/problems/implement-queue-using-stacks/',diff:'Easy',topic:'Queue'},
+  {day:49,name:'Design Circular Queue',link:'https://leetcode.com/problems/design-circular-queue/',diff:'Medium',topic:'Queue'},
+  {day:50,name:'Decode String',link:'https://leetcode.com/problems/decode-string/',diff:'Medium',topic:'Stack'},
+  // LINKED LIST (Days 51-70)
+  {day:51,name:'Reverse Linked List',link:'https://leetcode.com/problems/reverse-linked-list/',diff:'Easy',topic:'Linked List'},
+  {day:52,name:'Merge Two Sorted Lists',link:'https://leetcode.com/problems/merge-two-sorted-lists/',diff:'Easy',topic:'Linked List'},
+  {day:53,name:'Linked List Cycle',link:'https://leetcode.com/problems/linked-list-cycle/',diff:'Easy',topic:'Linked List'},
+  {day:54,name:'Middle of Linked List',link:'https://leetcode.com/problems/middle-of-the-linked-list/',diff:'Easy',topic:'Linked List'},
+  {day:55,name:'Merge K Sorted Lists',link:'https://leetcode.com/problems/merge-k-sorted-lists/',diff:'Hard',topic:'Linked List'},
+  {day:56,name:'LRU Cache',link:'https://leetcode.com/problems/lru-cache/',diff:'Medium',topic:'Linked List'},
+  {day:57,name:'Reorder List',link:'https://leetcode.com/problems/reorder-list/',diff:'Medium',topic:'Linked List'},
+  {day:58,name:'Copy List with Random Pointer',link:'https://leetcode.com/problems/copy-list-with-random-pointer/',diff:'Medium',topic:'Linked List'},
+  {day:59,name:'Add Two Numbers',link:'https://leetcode.com/problems/add-two-numbers/',diff:'Medium',topic:'Linked List'},
+  {day:60,name:'Sort List',link:'https://leetcode.com/problems/sort-list/',diff:'Medium',topic:'Linked List'},
+  // TREES (Days 61-90)
+  {day:61,name:'Maximum Depth of Binary Tree',link:'https://leetcode.com/problems/maximum-depth-of-binary-tree/',diff:'Easy',topic:'Trees'},
+  {day:62,name:'Invert Binary Tree',link:'https://leetcode.com/problems/invert-binary-tree/',diff:'Easy',topic:'Trees'},
+  {day:63,name:'Same Tree',link:'https://leetcode.com/problems/same-tree/',diff:'Easy',topic:'Trees'},
+  {day:64,name:'Path Sum',link:'https://leetcode.com/problems/path-sum/',diff:'Easy',topic:'Trees'},
+  {day:65,name:'Binary Tree Level Order Traversal',link:'https://leetcode.com/problems/binary-tree-level-order-traversal/',diff:'Medium',topic:'Trees'},
+  {day:66,name:'Validate BST',link:'https://leetcode.com/problems/validate-binary-search-tree/',diff:'Medium',topic:'Trees'},
+  {day:67,name:'Lowest Common Ancestor of BST',link:'https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/',diff:'Medium',topic:'Trees'},
+  {day:68,name:'Construct BT from Preorder/Inorder',link:'https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/',diff:'Medium',topic:'Trees'},
+  {day:69,name:'Diameter of Binary Tree',link:'https://leetcode.com/problems/diameter-of-binary-tree/',diff:'Easy',topic:'Trees'},
+  {day:70,name:'Binary Tree Maximum Path Sum',link:'https://leetcode.com/problems/binary-tree-maximum-path-sum/',diff:'Hard',topic:'Trees'},
+  {day:71,name:'Serialize and Deserialize BT',link:'https://leetcode.com/problems/serialize-and-deserialize-binary-tree/',diff:'Hard',topic:'Trees'},
+  {day:72,name:'Kth Smallest in BST',link:'https://leetcode.com/problems/kth-smallest-element-in-a-bst/',diff:'Medium',topic:'Trees'},
+  // RECURSION (Days 73-85)
+  {day:73,name:'Climbing Stairs',link:'https://leetcode.com/problems/climbing-stairs/',diff:'Easy',topic:'Recursion'},
+  {day:74,name:'Fibonacci Number',link:'https://leetcode.com/problems/fibonacci-number/',diff:'Easy',topic:'Recursion'},
+  {day:75,name:'Power of Two',link:'https://leetcode.com/problems/power-of-two/',diff:'Easy',topic:'Recursion'},
+  {day:76,name:'Reverse String (Recursion)',link:'https://leetcode.com/problems/reverse-string/',diff:'Easy',topic:'Recursion'},
+  {day:77,name:'Subsets',link:'https://leetcode.com/problems/subsets/',diff:'Medium',topic:'Backtracking'},
+  {day:78,name:'Permutations',link:'https://leetcode.com/problems/permutations/',diff:'Medium',topic:'Backtracking'},
+  {day:79,name:'Combination Sum',link:'https://leetcode.com/problems/combination-sum/',diff:'Medium',topic:'Backtracking'},
+  {day:80,name:'Letter Combinations',link:'https://leetcode.com/problems/letter-combinations-of-a-phone-number/',diff:'Medium',topic:'Backtracking'},
+  {day:81,name:'Generate Parentheses',link:'https://leetcode.com/problems/generate-parentheses/',diff:'Medium',topic:'Backtracking'},
+  {day:82,name:'N-Queens',link:'https://leetcode.com/problems/n-queens/',diff:'Hard',topic:'Backtracking'},
+  {day:83,name:'Word Search',link:'https://leetcode.com/problems/word-search/',diff:'Medium',topic:'Backtracking'},
+  // GRAPHS (Days 84-110)
+  {day:84,name:'Number of Islands',link:'https://leetcode.com/problems/number-of-islands/',diff:'Medium',topic:'Graphs'},
+  {day:85,name:'Clone Graph',link:'https://leetcode.com/problems/clone-graph/',diff:'Medium',topic:'Graphs'},
+  {day:86,name:'Course Schedule',link:'https://leetcode.com/problems/course-schedule/',diff:'Medium',topic:'Graphs'},
+  {day:87,name:'Pacific Atlantic Water Flow',link:'https://leetcode.com/problems/pacific-atlantic-water-flow/',diff:'Medium',topic:'Graphs'},
+  {day:88,name:'Graph Valid Tree',link:'https://leetcode.com/problems/graph-valid-tree/',diff:'Medium',topic:'Graphs'},
+  {day:89,name:'Rotting Oranges',link:'https://leetcode.com/problems/rotting-oranges/',diff:'Medium',topic:'Graphs'},
+  {day:90,name:'Walls and Gates',link:'https://leetcode.com/problems/walls-and-gates/',diff:'Medium',topic:'Graphs'},
+  {day:91,name:'Word Ladder',link:'https://leetcode.com/problems/word-ladder/',diff:'Hard',topic:'Graphs'},
+  {day:92,name:'Alien Dictionary',link:'https://leetcode.com/problems/alien-dictionary/',diff:'Hard',topic:'Graphs'},
+  {day:93,name:'Network Delay Time',link:'https://leetcode.com/problems/network-delay-time/',diff:'Medium',topic:'Graphs'},
+  // DYNAMIC PROGRAMMING (Days 95-150)
+  {day:95,name:'House Robber',link:'https://leetcode.com/problems/house-robber/',diff:'Medium',topic:'DP'},
+  {day:96,name:'Coin Change',link:'https://leetcode.com/problems/coin-change/',diff:'Medium',topic:'DP'},
+  {day:97,name:'Longest Increasing Subsequence',link:'https://leetcode.com/problems/longest-increasing-subsequence/',diff:'Medium',topic:'DP'},
+  {day:98,name:'Unique Paths',link:'https://leetcode.com/problems/unique-paths/',diff:'Medium',topic:'DP'},
+  {day:99,name:'Jump Game',link:'https://leetcode.com/problems/jump-game/',diff:'Medium',topic:'DP'},
+  {day:100,name:'Word Break',link:'https://leetcode.com/problems/word-break/',diff:'Medium',topic:'DP'},
+  {day:101,name:'Partition Equal Subset Sum',link:'https://leetcode.com/problems/partition-equal-subset-sum/',diff:'Medium',topic:'DP'},
+  {day:102,name:'Longest Common Subsequence',link:'https://leetcode.com/problems/longest-common-subsequence/',diff:'Medium',topic:'DP'},
+  {day:103,name:'Edit Distance',link:'https://leetcode.com/problems/edit-distance/',diff:'Hard',topic:'DP'},
+  {day:104,name:'Burst Balloons',link:'https://leetcode.com/problems/burst-balloons/',diff:'Hard',topic:'DP'},
+  {day:105,name:'Palindromic Substrings',link:'https://leetcode.com/problems/palindromic-substrings/',diff:'Medium',topic:'DP'},
+  {day:106,name:'Decode Ways',link:'https://leetcode.com/problems/decode-ways/',diff:'Medium',topic:'DP'},
+  {day:107,name:'Regular Expression Matching',link:'https://leetcode.com/problems/regular-expression-matching/',diff:'Hard',topic:'DP'},
+  {day:108,name:'Best Time to Buy/Sell III',link:'https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/',diff:'Hard',topic:'DP'},
+  {day:109,name:'Maximum Product Subarray',link:'https://leetcode.com/problems/maximum-product-subarray/',diff:'Medium',topic:'DP'},
+  {day:110,name:'Triangle',link:'https://leetcode.com/problems/triangle/',diff:'Medium',topic:'DP'},
+  // HEAP (Days 120-140)
+  {day:120,name:'Kth Largest Element',link:'https://leetcode.com/problems/kth-largest-element-in-an-array/',diff:'Medium',topic:'Heap'},
+  {day:121,name:'Find K Pairs with Smallest Sums',link:'https://leetcode.com/problems/find-k-pairs-with-smallest-sums/',diff:'Medium',topic:'Heap'},
+  {day:122,name:'Top K Frequent Words',link:'https://leetcode.com/problems/top-k-frequent-words/',diff:'Medium',topic:'Heap'},
+  {day:123,name:'Task Scheduler',link:'https://leetcode.com/problems/task-scheduler/',diff:'Medium',topic:'Heap'},
+  {day:124,name:'Meeting Rooms II',link:'https://leetcode.com/problems/meeting-rooms-ii/',diff:'Medium',topic:'Heap'},
+  {day:125,name:'Find Median From Data Stream',link:'https://leetcode.com/problems/find-median-from-data-stream/',diff:'Hard',topic:'Heap'},
+  // GREEDY (Days 141-160)
+  {day:141,name:'Jump Game II',link:'https://leetcode.com/problems/jump-game-ii/',diff:'Medium',topic:'Greedy'},
+  {day:142,name:'Gas Station',link:'https://leetcode.com/problems/gas-station/',diff:'Medium',topic:'Greedy'},
+  {day:143,name:'Hand of Straights',link:'https://leetcode.com/problems/hand-of-straights/',diff:'Medium',topic:'Greedy'},
+  {day:144,name:'Merge Intervals',link:'https://leetcode.com/problems/merge-intervals/',diff:'Medium',topic:'Greedy'},
+  {day:145,name:'Non-overlapping Intervals',link:'https://leetcode.com/problems/non-overlapping-intervals/',diff:'Medium',topic:'Greedy'},
+  {day:146,name:'Minimum Number of Arrows',link:'https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons/',diff:'Medium',topic:'Greedy'},
+  // TRIE (Days 161-175)
+  {day:161,name:'Implement Trie',link:'https://leetcode.com/problems/implement-trie-prefix-tree/',diff:'Medium',topic:'Trie'},
+  {day:162,name:'Design Add and Search Words DS',link:'https://leetcode.com/problems/design-add-and-search-words-data-structure/',diff:'Medium',topic:'Trie'},
+  {day:163,name:'Word Search II',link:'https://leetcode.com/problems/word-search-ii/',diff:'Hard',topic:'Trie'},
+  {day:164,name:'Replace Words',link:'https://leetcode.com/problems/replace-words/',diff:'Medium',topic:'Trie'},
+  // MATH (Days 176-200)
+  {day:176,name:'Palindrome Number',link:'https://leetcode.com/problems/palindrome-number/',diff:'Easy',topic:'Math'},
+  {day:177,name:'Reverse Integer',link:'https://leetcode.com/problems/reverse-integer/',diff:'Medium',topic:'Math'},
+  {day:178,name:'Count Primes',link:'https://leetcode.com/problems/count-primes/',diff:'Medium',topic:'Math'},
+  {day:179,name:'Happy Number',link:'https://leetcode.com/problems/happy-number/',diff:'Easy',topic:'Math'},
+  {day:180,name:'Excel Sheet Column Number',link:'https://leetcode.com/problems/excel-sheet-column-number/',diff:'Easy',topic:'Math'},
+  {day:181,name:'Pow(x, n)',link:'https://leetcode.com/problems/powx-n/',diff:'Medium',topic:'Math'},
+  {day:182,name:'Sqrt(x)',link:'https://leetcode.com/problems/sqrtx/',diff:'Easy',topic:'Math'},
+  // ADVANCED DP (Days 200-250)
+  {day:200,name:'Interleaving String',link:'https://leetcode.com/problems/interleaving-string/',diff:'Hard',topic:'DP'},
+  {day:201,name:'Distinct Subsequences',link:'https://leetcode.com/problems/distinct-subsequences/',diff:'Hard',topic:'DP'},
+  {day:202,name:'Russian Doll Envelopes',link:'https://leetcode.com/problems/russian-doll-envelopes/',diff:'Hard',topic:'DP'},
+  {day:203,name:'Wildcard Matching',link:'https://leetcode.com/problems/wildcard-matching/',diff:'Hard',topic:'DP'},
+  {day:204,name:'Maximal Square',link:'https://leetcode.com/problems/maximal-square/',diff:'Medium',topic:'DP'},
+  {day:205,name:'Count Square Submatrices',link:'https://leetcode.com/problems/count-square-submatrices-with-all-ones/',diff:'Medium',topic:'DP'},
+  {day:206,name:'Minimum Path Sum',link:'https://leetcode.com/problems/minimum-path-sum/',diff:'Medium',topic:'DP'},
+  {day:207,name:'Dungeon Game',link:'https://leetcode.com/problems/dungeon-game/',diff:'Hard',topic:'DP'},
+  {day:208,name:'Cherry Pickup II',link:'https://leetcode.com/problems/cherry-pickup-ii/',diff:'Hard',topic:'DP'},
+  // ADVANCED GRAPHS (Days 250-280)
+  {day:250,name:'Minimum Spanning Tree (Kruskal)',link:'https://leetcode.com/problems/min-cost-to-connect-all-points/',diff:'Medium',topic:'Graphs'},
+  {day:251,name:'Shortest Path Alien Maze',link:'https://leetcode.com/problems/shortest-path-in-a-grid-with-obstacles-elimination/',diff:'Hard',topic:'Graphs'},
+  {day:252,name:'Critical Connections in Network',link:'https://leetcode.com/problems/critical-connections-in-a-network/',diff:'Hard',topic:'Graphs'},
+  {day:253,name:'Swim in Rising Water',link:'https://leetcode.com/problems/swim-in-rising-water/',diff:'Hard',topic:'Graphs'},
+  {day:254,name:'Reconstruct Itinerary',link:'https://leetcode.com/problems/reconstruct-itinerary/',diff:'Hard',topic:'Graphs'},
+  // MIXED HARD (Days 280-300)
+  {day:280,name:'Largest Number',link:'https://leetcode.com/problems/largest-number/',diff:'Medium',topic:'Greedy'},
+  {day:281,name:'Monotonic Array',link:'https://leetcode.com/problems/monotonic-array/',diff:'Easy',topic:'Arrays'},
+  {day:282,name:'Prefix and Suffix Search',link:'https://leetcode.com/problems/prefix-and-suffix-search/',diff:'Hard',topic:'Trie'},
+  {day:283,name:'Number of Visible People in Queue',link:'https://leetcode.com/problems/number-of-visible-people-in-a-queue/',diff:'Hard',topic:'Stack'},
+  {day:284,name:'Max Points on a Line',link:'https://leetcode.com/problems/max-points-on-a-line/',diff:'Hard',topic:'Math'},
+  {day:285,name:'Count of Range Sum',link:'https://leetcode.com/problems/count-of-range-sum/',diff:'Hard',topic:'DP'},
+  {day:290,name:'Minimum Window Subsequence',link:'https://leetcode.com/problems/minimum-window-subsequence/',diff:'Hard',topic:'Sliding Window'},
+  {day:295,name:'Count Different Palindromic Subsequences',link:'https://leetcode.com/problems/count-different-palindromic-subsequences/',diff:'Hard',topic:'DP'},
+  {day:300,name:'Strange Printer',link:'https://leetcode.com/problems/strange-printer/',diff:'Hard',topic:'DP'},
+];
+
+// ===================== AI/ML DATA =====================
+const AIML_PHASES = [
+  {
+    name:'Python & Math',
+    color:'var(--blue)',
+    weeks:'Month 1 (Days 1–30)',
+    topics:[
+      {day:1,title:'Variables & Data Types',task:'Write programs using int, float, str, bool. Type conversion exercises.'},
+      {day:2,title:'Lists & List Operations',task:'5 problems: append, slice, sort, comprehension, nested lists.'},
+      {day:3,title:'Tuples & Sets',task:'Practice immutable structures, set operations (union, intersection, difference).'},
+      {day:4,title:'Dictionaries',task:'Frequency counter, word count, nested dict — 5 exercises.'},
+      {day:5,title:'Control Flow (if/elif/else)',task:'Pattern problems, nested conditions, ternary expressions.'},
+      {day:6,title:'Loops (for & while)',task:'Print patterns, sum/product loops, break/continue practice.'},
+      {day:7,title:'Functions & Scope',task:'Write 5 reusable functions. Practice *args, **kwargs, default params.'},
+      {day:8,title:'Lambda & Map/Filter',task:'Functional programming basics. Rewrite loops using map() and filter().'},
+      {day:9,title:'List Comprehensions',task:'Replace 5 loops with comprehensions. Nested comprehensions.'},
+      {day:10,title:'File Handling',task:'Read/write CSV and TXT. Parse structured data from file.'},
+      {day:11,title:'Exception Handling',task:'Try/except/finally. Custom exceptions. Error-safe file reader.'},
+      {day:12,title:'OOP — Classes & Objects',task:'Create 3 classes: BankAccount, Student, Library.'},
+      {day:13,title:'OOP — Inheritance',task:'Animal hierarchy. Override methods. super() usage.'},
+      {day:14,title:'OOP — Encapsulation',task:'Private attributes, getters/setters, property decorator.'},
+      {day:15,title:'Modules & Packages',task:'Create own module. Import from stdlib: os, sys, math, random.'},
+      {day:16,title:'Decorators',task:'Write @timer, @logger, @validate decorators. Understand closures.'},
+      {day:17,title:'Generators & Iterators',task:'Fibonacci generator. Custom range iterator. Yield comprehension.'},
+      {day:18,title:'Regular Expressions',task:'Email/phone validator. Text parser using re module.'},
+      {day:19,title:'DateTime & Time',task:'Date arithmetic, formatting, timezone handling, countdown timer.'},
+      {day:20,title:'Python Mini Project',task:'CLI task manager using all concepts learned so far.'},
+      {day:21,title:'Linear Algebra — Vectors',task:'Scalars, vectors, dot product, cross product. Implement with NumPy.'},
+      {day:22,title:'Linear Algebra — Matrices',task:'Matrix multiply, transpose, inverse, determinant by hand + NumPy.'},
+      {day:23,title:'Linear Algebra — Eigenvalues',task:'Eigenvectors, eigendecomposition. np.linalg.eig. Geometric intuition.'},
+      {day:24,title:'Calculus — Derivatives',task:'Power rule, chain rule, partial derivatives. Gradient intuition for ML.'},
+      {day:25,title:'Calculus — Gradient Descent',task:'Cost function, learning rate, convergence. Implement gradient descent.'},
+      {day:26,title:'Probability — Basics',task:'Events, conditional probability, Bayes theorem. Coin/dice simulations.'},
+      {day:27,title:'Probability — Distributions',task:'Normal, binomial, Poisson, uniform. scipy.stats practice.'},
+      {day:28,title:'Statistics — Descriptive',task:'Mean, median, mode, variance, std dev, percentiles on real data.'},
+      {day:29,title:'Statistics — Inferential',task:'Hypothesis testing, p-values, confidence intervals, t-test, chi-square.'},
+      {day:30,title:'Month 1 Review & Quiz',task:'Revise all Python + Math topics. Solve 10 mixed coding challenges.'},
+    ]
+  },
+  {
+    name:'Data Science Libs',
+    color:'var(--green)',
+    weeks:'Month 2 (Days 31–60)',
+    topics:[
+      {day:31,title:'NumPy — Arrays & ndarray',task:'Create 1D/2D/3D arrays. Zeros, ones, arange, linspace.'},
+      {day:32,title:'NumPy — Indexing & Slicing',task:'Fancy indexing, boolean masks, slice assignment.'},
+      {day:33,title:'NumPy — Broadcasting',task:'Arithmetic on arrays, broadcasting rules, element-wise ops.'},
+      {day:34,title:'NumPy — Math Functions',task:'np.sum, mean, std, exp, log, dot, cross, linalg basics.'},
+      {day:35,title:'NumPy — Reshaping',task:'reshape, flatten, transpose, stack, concatenate, split.'},
+      {day:36,title:'NumPy — Random & Sim',task:'Normal dist, uniform, shuffle, seed. Monte Carlo simulation.'},
+      {day:37,title:'NumPy — Linear Algebra',task:'Solve linear systems, SVD, matrix factorization with np.linalg.'},
+      {day:38,title:'Pandas — Series',task:'Create series, index ops, value_counts, basic stats.'},
+      {day:39,title:'Pandas — DataFrame Basics',task:'Create from dict/CSV, head/tail/info, dtypes, shape.'},
+      {day:40,title:'Pandas — Selection',task:'iloc, loc, boolean filtering, query(), where().'},
+      {day:41,title:'Pandas — Cleaning',task:'dropna, fillna, duplicates, astype, rename columns.'},
+      {day:42,title:'Pandas — Groupby & Agg',task:'groupby, agg, transform, pivot tables, crosstab.'},
+      {day:43,title:'Pandas — Merging',task:'merge (inner/left/right/outer), concat, join, append.'},
+      {day:44,title:'Pandas — Apply & Map',task:'apply(), map(), applymap(), lambda with pandas.'},
+      {day:45,title:'Pandas — Time Series',task:'DatetimeIndex, resample, rolling, shift, lag features.'},
+      {day:46,title:'Pandas — String Ops',task:'str accessor, regex with pandas, text cleaning pipelines.'},
+      {day:47,title:'Matplotlib — Basics',task:'Line, bar, scatter, histogram, pie. Labels, title, legend.'},
+      {day:48,title:'Matplotlib — Subplots',task:'plt.subplot, fig/axes, multiple plots, shared axes.'},
+      {day:49,title:'Matplotlib — Customization',task:'Colors, styles, annotations, colorbars, 3D plots.'},
+      {day:50,title:'Seaborn — Statistical',task:'heatmap, pairplot, distplot, boxplot, violinplot.'},
+      {day:51,title:'Seaborn — Regression',task:'regplot, lmplot, residplot. Visualize linear relationships.'},
+      {day:52,title:'Plotly — Interactive',task:'Interactive charts with plotly.express. Dash intro.'},
+      {day:53,title:'EDA — Titanic Dataset',task:'Load Titanic. Nulls, distributions, correlations, survival analysis.'},
+      {day:54,title:'EDA — Custom Dataset',task:'Pick a Kaggle dataset. Full EDA from scratch.'},
+      {day:55,title:'Feature Engineering I',task:'Encoding (OHE, label, target). Scaling (Standard, MinMax, Robust).'},
+      {day:56,title:'Feature Engineering II',task:'Imputation, outlier removal, skewness, polynomial features.'},
+      {day:57,title:'Feature Engineering III',task:'Date features, text features, interaction features. Feature stores.'},
+      {day:58,title:'Data Pipelines',task:'pandas pipe(), sklearn Pipeline, ColumnTransformer basics.'},
+      {day:59,title:'Web Scraping for Data',task:'BeautifulSoup + requests. Scrape a simple dataset. Ethics.'},
+      {day:60,title:'Month 2 Mini Project',task:'Full EDA + feature engineering on a real Kaggle dataset.'},
+    ]
+  },
+  {
+    name:'Classical ML',
+    color:'var(--purple)',
+    weeks:'Month 3 (Days 61–90)',
+    topics:[
+      {day:61,title:'ML Concepts & Taxonomy',task:'Supervised vs unsupervised vs RL. Bias-variance tradeoff.'},
+      {day:62,title:'Linear Regression (theory)',task:'Cost function, gradient descent. Implement from scratch.'},
+      {day:63,title:'Linear Regression (sklearn)',task:'sklearn LinearRegression. Train/test split. MSE, R² eval.'},
+      {day:64,title:'Multiple Linear Regression',task:'Multi-feature regression, multicollinearity, VIF analysis.'},
+      {day:65,title:'Polynomial Regression',task:'Polynomial features, overfitting demo, degree selection.'},
+      {day:66,title:'Logistic Regression',task:'Binary classification. Sigmoid, log loss. Breast Cancer dataset.'},
+      {day:67,title:'Multiclass Classification',task:'OVA vs OVO, softmax, multinomial logistic regression.'},
+      {day:68,title:'Decision Trees',task:'Gini vs entropy. max_depth tuning. Visualize splits.'},
+      {day:69,title:'Random Forest',task:'Bagging concept. sklearn RandomForest. Feature importance.'},
+      {day:70,title:'Gradient Boosting (XGBoost)',task:'Boosting concept. XGBoost basics. n_estimators, learning_rate.'},
+      {day:71,title:'LightGBM & CatBoost',task:'Compare LightGBM vs XGBoost. CatBoost for categoricals.'},
+      {day:72,title:'SVM — Linear',task:'Margin, support vectors. LinearSVC. Soft margin (C param).'},
+      {day:73,title:'SVM — Kernel',task:'RBF, polynomial kernels. Kernel trick intuition. gamma tuning.'},
+      {day:74,title:'K-Nearest Neighbors',task:'Distance metrics. KNN classifier. K selection (elbow method).'},
+      {day:75,title:'Naive Bayes',task:'Bayes theorem. GaussianNB, MultinomialNB. Spam classifier.'},
+      {day:76,title:'Model Evaluation Metrics',task:'Accuracy, Precision, Recall, F1, AUC-ROC, confusion matrix.'},
+      {day:77,title:'Cross-Validation',task:'k-fold, stratified k-fold, leave-one-out. cross_val_score.'},
+      {day:78,title:'Hyperparameter Tuning',task:'GridSearchCV, RandomizedSearchCV. Bayesian optimization.'},
+      {day:79,title:'Regularization (L1/L2)',task:'Ridge, Lasso, ElasticNet. Penalty intuition. L1 selection.'},
+      {day:80,title:'Ensemble — Voting & Stack',task:'Voting, stacking, blending. Build stacked ensemble.'},
+      {day:81,title:'Imbalanced Data',task:'SMOTE, class_weight, under/oversampling. AUROC focus.'},
+      {day:82,title:'Clustering — KMeans',task:'Inertia, silhouette. Elbow method. Customer segmentation.'},
+      {day:83,title:'Clustering — DBSCAN',task:'Density-based clustering. eps & min_samples tuning.'},
+      {day:84,title:'Hierarchical Clustering',task:'Agglomerative, dendrogram, linkage types.'},
+      {day:85,title:'PCA',task:'Eigendecomposition, explained variance, 2D projection.'},
+      {day:86,title:'t-SNE & UMAP',task:'Perplexity, UMAP vs t-SNE. Visualize MNIST embeddings.'},
+      {day:87,title:'Pipelines & Production',task:'Full sklearn Pipeline. ColumnTransformer. Joblib export.'},
+      {day:88,title:'ML Project — Regression',task:'End-to-end: EDA → preprocess → model → tune (House Prices).'},
+      {day:89,title:'ML Project — Classification',task:'End-to-end: classify with multiple algorithms. Best model.'},
+      {day:90,title:'Month 3 Review & Quiz',task:'Revise all ML topics. Compare algorithms on a benchmark.'},
+    ]
+  },
+  {
+    name:'Advanced ML & NLP',
+    color:'var(--amber)',
+    weeks:'Month 4 (Days 91–120)',
+    topics:[
+      {day:91,title:'Time Series — Intro',task:'Trend, seasonality, stationarity. ADF test. Decomposition.'},
+      {day:92,title:'Time Series — ARIMA',task:'AR, MA, ARIMA models. ACF/PACF plots. Forecasting.'},
+      {day:93,title:'Time Series — Prophet',task:'Facebook Prophet. Holidays, changepoints. Stock prediction.'},
+      {day:94,title:'Time Series — ML Methods',task:'Lag features, rolling stats. XGBoost for time series.'},
+      {day:95,title:'Anomaly Detection',task:'Isolation Forest, LOF, OCSVM. Network intrusion dataset.'},
+      {day:96,title:'Recommendation Systems I',task:'Content-based filtering. Cosine similarity. Movie recommender.'},
+      {day:97,title:'Recommendation Systems II',task:'Collaborative filtering. Matrix factorization. SVD.'},
+      {day:98,title:'NLP — Text Preprocessing',task:'Tokenization, stop words, stemming, lemmatization.'},
+      {day:99,title:'NLP — Bag of Words & TF-IDF',task:'BoW, TF-IDF vectorization. Sentiment classification.'},
+      {day:100,title:'NLP — Word Embeddings',task:'Word2Vec, GloVe. Cosine similarity. Vector arithmetic.'},
+      {day:101,title:'NLP — Text Classification',task:'Naive Bayes + TF-IDF. Spam detection. Multi-class NLP.'},
+      {day:102,title:'NLP — Named Entity Recognition',task:'spaCy NER. Custom NER training. Resume parser.'},
+      {day:103,title:'NLP — Topic Modeling',task:'LDA, NMF. Extract topics from news articles. pyLDAvis.'},
+      {day:104,title:'NLP — Sentiment Analysis',task:'VADER, TextBlob. Fine-grained sentiment. Product reviews.'},
+      {day:105,title:'NLP Mini Project',task:'Full NLP pipeline: data → clean → vectorize → classify → deploy.'},
+      {day:106,title:'A/B Testing for ML',task:'Hypothesis testing, statistical significance, effect size.'},
+      {day:107,title:'Explainable AI — SHAP',task:'SHAP values, force plots, summary plots. Model explainability.'},
+      {day:108,title:'Explainable AI — LIME',task:'Local interpretable explanations. Compare SHAP vs LIME.'},
+      {day:109,title:'AutoML Tools',task:'Auto-sklearn, TPOT, H2O AutoML. When to use & limitations.'},
+      {day:110,title:'Feature Selection',task:'Mutual info, chi-square, RFE, Boruta. Select best features.'},
+      {day:111,title:'Advanced Ensembles',task:'Stacking with cross-validation. Multi-level stacking.'},
+      {day:112,title:'Bayesian ML Intro',task:'Bayesian inference, priors, posteriors. Bayesian regression.'},
+      {day:113,title:'Gaussian Processes',task:'GP regression intuition. Uncertainty quantification.'},
+      {day:114,title:'ML System Design',task:'Design a recommendation/fraud detection system. Trade-offs.'},
+      {day:115,title:'Data Versioning (DVC)',task:'DVC basics. Track datasets and experiments. Reproduce results.'},
+      {day:116,title:'ML on Cloud — AWS',task:'SageMaker overview. S3 data. Training jobs.'},
+      {day:117,title:'ML on Cloud — GCP',task:'Vertex AI overview. BigQuery ML. AutoML.'},
+      {day:118,title:'ML Project — NLP',task:'End-to-end NLP project with deployment-ready model.'},
+      {day:119,title:'ML Project — Time Series',task:'End-to-end forecasting with evaluation & visualization.'},
+      {day:120,title:'Month 4 Review & Quiz',task:'Revise advanced ML + NLP. Mock interview questions.'},
+    ]
+  },
+  {
+    name:'Deep Learning',
+    color:'var(--accent)',
+    weeks:'Month 5 (Days 121–150)',
+    topics:[
+      {day:121,title:'Neural Networks — Theory',task:'Perceptron, activations, forward pass, backprop intuition.'},
+      {day:122,title:'NN — From Scratch',task:'Build 2-layer NN with NumPy. Sigmoid + cross entropy.'},
+      {day:123,title:'TensorFlow / Keras Basics',task:'Sequential model. Dense layers, compile, fit, evaluate.'},
+      {day:124,title:'PyTorch Basics',task:'Tensors, autograd, nn.Module. Compare with TF/Keras.'},
+      {day:125,title:'Deep Neural Networks',task:'Hidden layers, dropout, BatchNorm. Tune depth and width.'},
+      {day:126,title:'Optimizers',task:'SGD, Adam, RMSProp, AdaGrad. Learning rate scheduling.'},
+      {day:127,title:'Loss Functions',task:'Binary CE, Categorical CE, MSE, Focal Loss. When to use.'},
+      {day:128,title:'Regularization in DL',task:'Dropout, L2, early stopping, data augmentation strategies.'},
+      {day:129,title:'CNNs — Theory',task:'Conv layer, pooling, feature maps, receptive field.'},
+      {day:130,title:'CNNs — Image Classify',task:'Build CNN for CIFAR-10. Data augmentation. BatchNorm.'},
+      {day:131,title:'CNNs — Architectures',task:'LeNet, VGG, ResNet, InceptionNet. Compare architectures.'},
+      {day:132,title:'Transfer Learning',task:'VGG16/ResNet50, frozen layers. Fine-tune on custom data.'},
+      {day:133,title:'Object Detection — YOLO',task:'YOLO concepts. Run pre-trained YOLO. Custom detection.'},
+      {day:134,title:'Image Segmentation',task:'U-Net, semantic vs instance segmentation. Mask R-CNN.'},
+      {day:135,title:'RNNs & LSTMs',task:'Sequence modeling. LSTM for text gen or stock prediction.'},
+      {day:136,title:'GRU & Bidirectional RNN',task:'GRU vs LSTM. Bidirectional RNN. Sequence classification.'},
+      {day:137,title:'Seq2Seq Models',task:'Encoder-decoder. Machine translation basics.'},
+      {day:138,title:'Attention Mechanism',task:'Self-attention, multi-head attention. Implement from scratch.'},
+      {day:139,title:'Transformers — Architecture',task:'Positional encoding, multi-head attention, feed-forward.'},
+      {day:140,title:'BERT',task:'HuggingFace transformers. Fine-tune BERT for NLP tasks.'},
+      {day:141,title:'GPT & Text Generation',task:'GPT architecture. Text generation with GPT-2. Decoding.'},
+      {day:142,title:'GANs',task:'Generator + Discriminator. DCGAN. Mode collapse.'},
+      {day:143,title:'Autoencoders',task:'Standard AE, Variational AE. Anomaly detection with AE.'},
+      {day:144,title:'Diffusion Models Intro',task:'Denoising diffusion. Stable Diffusion concepts.'},
+      {day:145,title:'Speech & Audio DL',task:'Spectrograms, Wav2Vec. Speech recognition basics.'},
+      {day:146,title:'Reinforcement Learning I',task:'MDP, Bellman equation, Q-learning. GridWorld agent.'},
+      {day:147,title:'Reinforcement Learning II',task:'Deep Q-Network (DQN). OpenAI Gym. CartPole.'},
+      {day:148,title:'DL Deployment — FastAPI',task:'Flask/FastAPI REST endpoint. Pickle model. Docker.'},
+      {day:149,title:'DL Mini Project',task:'Image classifier or NLP model deployed as REST API.'},
+      {day:150,title:'Month 5 Review',task:'Revise DL topics. Compare CNN/RNN/Transformer use cases.'},
+    ]
+  },
+  {
+    name:'GenAI & Ops',
+    color:'var(--red)',
+    weeks:'Month 6 (Days 151–180)',
+    topics:[
+      {day:151,title:'LLM Fundamentals',task:'Tokenization, embedding, context window. GPT architecture.'},
+      {day:152,title:'Prompt Engineering',task:'Zero-shot, few-shot, chain-of-thought. Prompt optimization.'},
+      {day:153,title:'LangChain Basics',task:'Chains, agents, memory. Build a Q&A chatbot with LangChain.'},
+      {day:154,title:'RAG — Retrieval Augmented',task:'Vector databases (Pinecone/ChromaDB). Embed + retrieve + generate.'},
+      {day:155,title:'RAG — Advanced',task:'Chunking strategies, re-ranking, hybrid search. Production RAG.'},
+      {day:156,title:'Fine-tuning LLMs',task:'LoRA, QLoRA. Fine-tune a model on custom data. HuggingFace.'},
+      {day:157,title:'Agents & Tool Use',task:'LLM agents, function calling, ReAct. Build an AI assistant.'},
+      {day:158,title:'Multi-modal AI',task:'Vision + language models. CLIP, LLaVA. Image captioning.'},
+      {day:159,title:'Evaluation of LLMs',task:'BLEU, ROUGE, perplexity. Human eval. LLM-as-judge.'},
+      {day:160,title:'AI Safety & Ethics',task:'Bias, fairness, hallucination. Responsible AI frameworks.'},
+      {day:161,title:'MLOps — Experiment Tracking',task:'MLflow / Weights & Biases. Model versioning. Reproducibility.'},
+      {day:162,title:'MLOps — CI/CD for ML',task:'GitHub Actions for ML. Automated training + testing pipelines.'},
+      {day:163,title:'MLOps — Model Serving',task:'TorchServe, TF Serving, BentoML. Scaling inference.'},
+      {day:164,title:'MLOps — Monitoring',task:'Data drift (Evidently AI). Concept drift. Alerting.'},
+      {day:165,title:'Docker for ML',task:'Containerize ML app. Multi-stage builds. Docker Compose.'},
+      {day:166,title:'Kubernetes for ML',task:'K8s basics. Deploy ML model. Horizontal pod autoscaling.'},
+      {day:167,title:'Feature Stores',task:'Feast concepts. Online vs offline features. Serving.'},
+      {day:168,title:'Vector Databases Deep Dive',task:'Pinecone, Weaviate, Milvus. Similarity search at scale.'},
+      {day:169,title:'ML System Design I',task:'Design a fraud detection system. Trade-offs, scale.'},
+      {day:170,title:'ML System Design II',task:'Design a recommendation engine. Real-time vs batch.'},
+      {day:171,title:'Capstone — Week 1',task:'Define problem, gather data, perform EDA. Project planning.'},
+      {day:172,title:'Capstone — Week 1',task:'Feature engineering & baseline model. Experiment setup.'},
+      {day:173,title:'Capstone — Week 1',task:'Try multiple models. Hyperparameter tuning. Compare results.'},
+      {day:174,title:'Capstone — Week 2',task:'Build API endpoint. Frontend integration. Error handling.'},
+      {day:175,title:'Capstone — Week 2',task:'Containerize with Docker. Write tests. CI/CD setup.'},
+      {day:176,title:'Capstone — Week 2',task:'Deploy to cloud. Monitoring setup. Load testing.'},
+      {day:177,title:'Portfolio & GitHub',task:'Document all projects. Write READMEs. Clean repo structure.'},
+      {day:178,title:'Resume & LinkedIn',task:'Update resume with ML projects. Optimize LinkedIn profile.'},
+      {day:179,title:'ML Interview Prep',task:'Top 50 ML interview Qs. Explain algorithms. System design.'},
+      {day:180,title:'🎓 Graduation Day',task:'Celebrate! Review full journey. Plan next specialization.'},
+    ]
+  }
+];
+
+// ===================== APTITUDE DATA =====================
+const APT_TOPICS = [
+  {name:'Speed, Distance & Time', priority:'🔴 Priority 1', resources:[
+    {title:'IndiaBix — Speed, Distance',url:'https://www.indiabix.com/aptitude/speed-time-and-distance/'},
+    {title:'Hitbullseye — SDT Practice',url:'https://www.hitbullseye.com/Quant/Speed-Distance-Time.php'},
+    {title:'GeeksForGeeks — SDT',url:'https://www.geeksforgeeks.org/speed-distance-time/'},
+  ]},
+  {name:'Time & Work', priority:'🔴 Priority 2', resources:[
+    {title:'IndiaBix — Time & Work',url:'https://www.indiabix.com/aptitude/time-and-work/'},
+    {title:'Hitbullseye — Time Work',url:'https://www.hitbullseye.com/Quant/Time-and-Work.php'},
+  ]},
+  {name:'Clocks & Calendars', priority:'🟠 Priority 3', resources:[
+    {title:'IndiaBix — Clocks',url:'https://www.indiabix.com/aptitude/clocks/'},
+    {title:'IndiaBix — Calendars',url:'https://www.indiabix.com/aptitude/calendar/'},
+  ]},
+  {name:'Set Theory / Venn Diagrams', priority:'🟠 Priority 4', resources:[
+    {title:'GeeksForGeeks — Venn Diagrams',url:'https://www.geeksforgeeks.org/set-theory/'},
+    {title:'IndiaBix — Set Theory',url:'https://www.indiabix.com/aptitude/problems-on-numbers/'},
+  ]},
+  {name:'Ratios & Proportions', priority:'🟡 Priority 5', resources:[
+    {title:'IndiaBix — Ratio',url:'https://www.indiabix.com/aptitude/ratio-and-proportion/'},
+  ]},
+  {name:'Percentages', priority:'🟡 Priority 6', resources:[
+    {title:'IndiaBix — Percentages',url:'https://www.indiabix.com/aptitude/percentage/'},
+    {title:'Hitbullseye — Percentages',url:'https://www.hitbullseye.com/Quant/Percentage.php'},
+  ]},
+];
+
+const APT_YT_RESOURCES = [
+  {cat:'YouTube Channels',items:[
+    {title:'Feel Free to Learn',url:'https://www.youtube.com/@FeelFreetoLearn',desc:'Best for placement aptitude prep'},
+    {title:'CareerRide',url:'https://www.youtube.com/@CareerRide',desc:'Step-by-step quant + verbal'},
+    {title:'Amar Sir Aptitude',url:'https://www.youtube.com/@AmarSirQuantitativeAptitude',desc:'Unique tricks & shortcut methods'},
+    {title:'TalentSprint Aptitude',url:'https://www.youtube.com/@TalentSprintAptitudePrep',desc:'Numerical reasoning mastery'},
+    {title:'Study Smart',url:'https://www.youtube.com/@StudySmartbyChandrahas',desc:'QA, LR & DI for all exams'},
+    {title:'PlacementSeason',url:'https://www.youtube.com/@PlacementSeason',desc:'Company-specific mock tests'},
+  ]},
+  {cat:'Documentation & Practice',items:[
+    {title:'IndiaBix — All Topics',url:'https://www.indiabix.com/aptitude/questions-and-answers/',desc:'1000+ problems with solutions'},
+    {title:'GeeksforGeeks Aptitude',url:'https://www.geeksforgeeks.org/aptitude-questions-and-answers/',desc:'Topic-wise Q&A + explanations'},
+    {title:'Testbook Free Tests',url:'https://testbook.com/aptitude-preparation',desc:'Timed practice tests'},
+    {title:'Freshersworld Aptitude',url:'https://placement.freshersworld.com/aptitude-questions',desc:'Placement-focused questions'},
+    {title:'PrepInsta',url:'https://prepinsta.com/aptitude/',desc:'Company-wise question banks'},
+    {title:'Sawaal.com',url:'https://www.sawaal.com/aptitude-reasoning/',desc:'Practice with detailed solutions'},
+  ]}
+];
+
+const AIML_RESOURCES = [
+  {cat:'🎓 Core Courses',items:[
+    {title:'Andrew Ng — ML (Coursera)',url:'https://www.coursera.org/learn/machine-learning',desc:'The gold standard ML course'},
+    {title:'Stanford CS229',url:'https://www.youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU',desc:'Advanced ML theory lectures'},
+    {title:'Deep Learning Specialization',url:'https://www.coursera.org/specializations/deep-learning',desc:'5-course DL path by Andrew Ng'},
+    {title:'Fast.ai — Practical DL',url:'https://course.fast.ai/',desc:'Code-first deep learning'},
+  ]},
+  {cat:'📺 YouTube Channels',items:[
+    {title:'StatQuest — Josh Starmer',url:'https://www.youtube.com/@statquest',desc:'ML/Stats explained simply'},
+    {title:'3Blue1Brown',url:'https://www.youtube.com/@3blue1brown',desc:'Visual math & neural networks'},
+    {title:'Sentdex',url:'https://www.youtube.com/@sentdex',desc:'Python ML/DL tutorials'},
+    {title:'Krish Naik',url:'https://www.youtube.com/@krishnaik06',desc:'End-to-end ML projects (Hindi)'},
+    {title:'CodeBasics',url:'https://www.youtube.com/@codebasics',desc:'Data Science in Hindi/English'},
+    {title:'Two Minute Papers',url:'https://www.youtube.com/@TwoMinutePapers',desc:'Latest AI research summaries'},
+    {title:'Yannic Kilcher',url:'https://www.youtube.com/@YannicKilcher',desc:'Paper explanations & reviews'},
+    {title:'Abhishek Thakur',url:'https://www.youtube.com/@abhaborhade',desc:'Kaggle Grandmaster tutorials'},
+  ]},
+  {cat:'📖 Documentation & Blogs',items:[
+    {title:'Scikit-learn Docs',url:'https://scikit-learn.org/stable/user_guide.html',desc:'Official ML library guide'},
+    {title:'PyTorch Tutorials',url:'https://pytorch.org/tutorials/',desc:'Official DL framework tutorials'},
+    {title:'TensorFlow Guides',url:'https://www.tensorflow.org/tutorials',desc:'Google\'s DL framework'},
+    {title:'HuggingFace Docs',url:'https://huggingface.co/docs',desc:'Transformers & NLP models'},
+    {title:'Analytics Vidhya',url:'https://www.analyticsvidhya.com/blog/',desc:'ML articles & tutorials'},
+    {title:'Towards Data Science',url:'https://towardsdatascience.com/',desc:'Medium\'s top DS publication'},
+    {title:'Kaggle Learn',url:'https://www.kaggle.com/learn',desc:'Free micro-courses + datasets'},
+    {title:'Papers With Code',url:'https://paperswithcode.com/',desc:'SOTA models + implementations'},
+  ]}
+];
+
+const SCHEDULE = [
+  {time:'9:00 – 10:00 AM', task:'LeetCode', detail:'Solve today\'s problem WITHOUT looking at solution first', color:'var(--green)', pts:3},
+  {time:'10:00 – 10:20 AM', task:'Syntax Training', detail:'Rewrite yesterday\'s code from memory (or 2 snippets)', color:'var(--amber)', pts:2},
+  {time:'10:20 – 10:40 AM', task:'Aptitude', detail:'10 timed questions — focus on this week\'s topic', color:'var(--blue)', pts:2},
+  {time:'10:40 – 11:40 AM', task:'AI/ML Study', detail:'Follow roadmap topic — code along, no passive watching', color:'var(--purple)', pts:2},
+  {time:'11:40 – 12:00 PM', task:'GitHub Push', detail:'Commit: LeetCode solution + any practice code', color:'var(--text2)', pts:1},
+];
+
+// ===================== UTILS =====================
+function today() { return new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function todayKey() { const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+function toast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
+}
+function scoreLevel(s) {
+  if(s>=9) return {label:'🔥 Excellent',cls:'score-excellent'};
+  if(s>=6) return {label:'👍 Good',cls:'score-good'};
+  if(s>=3) return {label:'⚠️ Weak',cls:'score-weak'};
+  return {label:'❌ Missed',cls:'score-miss'};
+}
+function calcScore(log) {
+  return (log.lc?3:0)+(log.syntax?2:0)+(log.apt?2:0)+(log.aiml?2:0)+(log.gh?1:0)+(log.li?1:0);
+}
+
+// ===================== NAV =====================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const btns=[...document.querySelectorAll('.nav-btn')];
+  const labels={dashboard:'Dashboard',leetcode:'LeetCode',aiml:'AI/ML',aptitude:'Aptitude',linkedin:'LinkedIn',daily:'Daily Log'};
+  btns.forEach(b=>{ if(b.textContent===labels[name]) b.classList.add('active'); });
+  if(name==='dashboard') updateDashboard();
+  if(name==='leetcode') renderLCTable();
+  if(name==='aiml') renderAiml();
+  if(name==='aptitude') renderAptitude();
+  if(name==='linkedin') renderLinkedin();
+  if(name==='daily') renderDaily();
+}
+
+// ===================== DASHBOARD =====================
+function updateDashboard() {
+  const logs = data.logs || [];
+  document.getElementById('d-total-days').textContent = logs.length;
+  const scores = logs.map(l=>calcScore(l));
+  const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : 0;
+  document.getElementById('d-avg-score').textContent = avg;
+  // streak
+  let streak=0;
+  const today=todayKey();
+  const logDates=new Set(logs.map(l=>l.dateKey));
+  const d=new Date(); let k=()=>`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  while(logDates.has(k())) { streak++; d.setDate(d.getDate()-1); }
+  document.getElementById('d-streak').textContent=streak;
+  // lc
+  const lcStatus=data.lcStatus||{};
+  const solved=Object.values(lcStatus).filter(s=>s==='Solved'||s==='Revised').length;
+  const revised=Object.values(lcStatus).filter(s=>s==='Revised').length;
+  const easy=LC_PROBLEMS.filter(p=>(lcStatus[p.day]==='Solved'||lcStatus[p.day]==='Revised')&&p.diff==='Easy').length;
+  const med=LC_PROBLEMS.filter(p=>(lcStatus[p.day]==='Solved'||lcStatus[p.day]==='Revised')&&p.diff==='Medium').length;
+  const hard=LC_PROBLEMS.filter(p=>(lcStatus[p.day]==='Solved'||lcStatus[p.day]==='Revised')&&p.diff==='Hard').length;
+  document.getElementById('d-lc-solved').textContent=solved;
+  document.getElementById('lc-solved-count').textContent=solved;
+  document.getElementById('lc-revised-count').textContent=revised;
+  const consistency=scores.length?Math.round(scores.filter(s=>s>=6).length/scores.length*100):0;
+  document.getElementById('d-consistency').textContent=consistency+'%';
+  document.getElementById('lc-prog-txt').textContent=`${solved}/450`;
+  document.getElementById('lc-prog-bar').style.width=Math.min(100,solved/450*100)+'%';
+  const easyTotal=LC_PROBLEMS.filter(p=>p.diff==='Easy').length;
+  const medTotal=LC_PROBLEMS.filter(p=>p.diff==='Medium').length;
+  const hardTotal=LC_PROBLEMS.filter(p=>p.diff==='Hard').length;
+  document.getElementById('lc-easy-txt').textContent=easy;
+  document.getElementById('lc-easy-bar').style.width=Math.min(100,easy/easyTotal*100)+'%';
+  document.getElementById('lc-med-txt').textContent=med;
+  document.getElementById('lc-med-bar').style.width=Math.min(100,med/medTotal*100)+'%';
+  document.getElementById('lc-hard-txt').textContent=hard;
+  document.getElementById('lc-hard-bar').style.width=Math.min(100,hard/hardTotal*100)+'%';
+  // aiml progress (dynamic for all phases)
+  const aimlDone=data.aimlDone||{};
+  const done=Object.values(aimlDone).filter(v=>v).length;
+  const dashAiml=document.getElementById('dash-aiml-progress');
+  const phaseColors=['var(--blue)','var(--green)','var(--purple)','var(--amber)','var(--accent)','var(--red)'];
+  dashAiml.innerHTML=AIML_PHASES.map((p,i)=>{
+    const cnt=p.topics.filter(t=>aimlDone[t.day]).length;
+    const total=p.topics.length;
+    const pct=Math.round(cnt/total*100);
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:13px;">${p.name}</span>
+        <span style="font-family:var(--mono);font-size:13px;">${cnt}/${total}</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${phaseColors[i]};"></div></div>
+    </div>`;
+  }).join('');
+  // score chart
+  const chart=document.getElementById('score-chart');
+  const last14=logs.slice(-14);
+  chart.innerHTML='';
+  for(let i=0;i<14;i++) {
+    const log=last14[i];
+    const s=log?calcScore(log):0;
+    const h=log?Math.max(6,s/11*60):3;
+    const c=s>=9?'var(--accent)':s>=6?'var(--green)':s>=3?'var(--amber)':'var(--bg4)';
+    const bar=document.createElement('div');
+    bar.className='mini-bar';
+    bar.style.cssText=`height:${h}px;background:${c};`;
+    bar.setAttribute('data-tip',log?`${log.date}: ${s}pts`:`Day ${i+1}`);
+    chart.appendChild(bar);
+  }
+  // task breakdown
+  const taskBreak=document.getElementById('task-breakdown');
+  const tasks=[
+    {label:'LeetCode',key:'lc',color:'var(--green)',total:logs.length||1},
+    {label:'Syntax',key:'syntax',color:'var(--amber)',total:logs.length||1},
+    {label:'Aptitude',key:'apt',color:'var(--blue)',total:logs.length||1},
+    {label:'AI/ML',key:'aiml',color:'var(--purple)',total:logs.length||1},
+    {label:'GitHub',key:'gh',color:'var(--text2)',total:logs.length||1},
+  ];
+  taskBreak.innerHTML=tasks.map(t=>{
+    const cnt=logs.filter(l=>l[t.key]).length;
+    const pct=logs.length?Math.round(cnt/logs.length*100):0;
+    return `<div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:13px;">${t.label}</span>
+        <span style="font-family:var(--mono);font-size:13px;color:${t.color};">${cnt}/${logs.length} (${pct}%)</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${t.color};"></div></div>
+    </div>`;
+  }).join('');
+  // today goals
+  const tg=document.getElementById('today-goals');
+  const todayLog=logs.find(l=>l.dateKey===todayKey());
+  const goals=[
+    {label:'LeetCode',done:todayLog?.lc,pts:3},
+    {label:'Syntax',done:todayLog?.syntax,pts:2},
+    {label:'Aptitude',done:todayLog?.apt,pts:2},
+    {label:'AI/ML',done:todayLog?.aiml,pts:2},
+    {label:'GitHub',done:todayLog?.gh,pts:1},
+    {label:'LinkedIn',done:todayLog?.li,pts:1},
+  ];
+  const ts=todayLog?calcScore(todayLog):0;
+  const tsl=scoreLevel(ts);
+  tg.innerHTML=`<div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:13px;color:var(--text2);">Score</span>
+    <span class="score-badge ${tsl.cls}">${ts}/11 — ${tsl.label}</span>
+  </div>`+goals.map(g=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;${g.done?'background:var(--green);border-color:var(--green);':''}">
+        ${g.done?'<span style="color:#fff;font-size:11px;">✓</span>':''}
+      </div>
+      <span style="flex:1;font-size:13px;${g.done?'text-decoration:line-through;color:var(--text3);':''}">${g.label}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--text3);">+${g.pts}pt</span>
+    </div>
+  `).join('');
+  // aiml counters
+  const totalDone=Object.values(data.aimlDone||{}).filter(v=>v).length;
+  document.getElementById('aiml-done-count').textContent=totalDone;
+  const totalTopics=AIML_PHASES.reduce((a,p)=>a+p.topics.length,0);
+  document.getElementById('aiml-pct').textContent=Math.round(totalDone/totalTopics*100)+'%';
+}
+
+// ===================== LEETCODE =====================
+let lcFiltered = [...LC_PROBLEMS];
+function renderLCTable(problems) {
+  problems = problems || lcFiltered;
+  const lcStatus = data.lcStatus || {};
+  let solved=0,revised=0,attempted=0;
+  Object.values(lcStatus).forEach(s=>{
+    if(s==='Solved') solved++;
+    else if(s==='Revised') revised++;
+    else if(s==='Attempted') attempted++;
+  });
+  document.getElementById('lc-solved-count').textContent=solved+revised;
+  document.getElementById('lc-revised-count').textContent=revised;
+  document.getElementById('lc-attempted-count').textContent=attempted;
+  const studyDay=getStudyDay();
+  const daysLeft=getDaysUntilEnd();
+  document.getElementById('lc-days-left').textContent=isOnExamBreak()?'📚 Exam':daysLeft;
+  const tbody=document.getElementById('lc-table-body');
+  tbody.innerHTML=problems.map((p,i)=>{
+    const st=lcStatus[p.day]||'Not Started';
+    const stClass={'Not Started':'status-ns','Attempted':'status-attempted','Solved':'status-solved','Revised':'status-revised'}[st]||'status-ns';
+    const diffPill={'Easy':'pill-easy','Medium':'pill-med','Hard':'pill-hard'}[p.diff]||'pill-easy';
+    return `<tr>
+      <td style="font-family:var(--mono);color:var(--text3);font-size:12px;">${i+1}</td>
+      <td><a class="lc-link" href="${p.link}" target="_blank">${p.name}</a></td>
+      <td><span class="pill ${diffPill}">${p.diff}</span></td>
+      <td style="color:var(--text2);font-size:12px;">${p.topic}</td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--text3);">${p.day}</td>
+      <td><span class="status ${stClass}" onclick="cycleStatus(${p.day},this)">${st}</span></td>
+    </tr>`;
+  }).join('');
+}
+function filterLC() {
+  const q=(document.getElementById('lc-search').value||'').toLowerCase();
+  const diff=document.getElementById('lc-filter-diff').value;
+  const topic=document.getElementById('lc-filter-topic').value;
+  const status=document.getElementById('lc-filter-status').value;
+  lcFiltered=LC_PROBLEMS.filter(p=>{
+    const lcStatus=data.lcStatus||{};
+    return (!q||p.name.toLowerCase().includes(q))
+      &&(!diff||p.diff===diff)
+      &&(!topic||p.topic===topic)
+      &&(!status||(lcStatus[p.day]||'Not Started')===status);
+  });
+  renderLCTable(lcFiltered);
+}
+function cycleStatus(day, el) {
+  const states=['Not Started','Attempted','Solved','Revised'];
+  const cur=el.textContent;
+  const next=states[(states.indexOf(cur)+1)%states.length];
+  if(!data.lcStatus) data.lcStatus={};
+  data.lcStatus[day]=next;
+  save();
+  const cls={'Not Started':'status-ns','Attempted':'status-attempted','Solved':'status-solved','Revised':'status-revised'}[next];
+  el.className=`status ${cls}`;
+  el.textContent=next;
+  updateDashboard();
+  toast(`Status updated: ${next}`);
+}
+
+// ===================== AI/ML =====================
+let currentAimlPhase=0;
+function renderAiml() {
+  renderAimlPhase(currentAimlPhase);
+  const done=Object.values(data.aimlDone||{}).filter(v=>v).length;
+  const total=AIML_PHASES.reduce((a,p)=>a+p.topics.length,0);
+  document.getElementById('aiml-done-count').textContent=done;
+  document.getElementById('aiml-pct').textContent=Math.round(done/total*100)+'%';
+  // current phase
+  let phaseIdx=0;
+  AIML_PHASES.forEach((p,i)=>{
+    const done=p.topics.filter(t=>data.aimlDone&&data.aimlDone[t.day]).length;
+    if(done>0&&done<p.topics.length) phaseIdx=i;
+    if(done===p.topics.length&&i===phaseIdx) phaseIdx=Math.min(i+1,AIML_PHASES.length-1);
+  });
+  document.getElementById('aiml-phase-name').textContent=AIML_PHASES[phaseIdx].name;
+  document.getElementById('aiml-week-num').textContent=Math.min(6,Math.ceil(done/30)||1);
+}
+function switchAimlPhase(idx,el) {
+  currentAimlPhase=idx;
+  document.querySelectorAll('#aiml-tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderAimlPhase(idx);
+}
+function renderAimlPhase(idx) {
+  const phase=AIML_PHASES[idx];
+  const aimlDone=data.aimlDone||{};
+  const done=phase.topics.filter(t=>aimlDone[t.day]).length;
+  const pct=Math.round(done/phase.topics.length*100);
+  const container=document.getElementById('aiml-phase-content');
+  container.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div>
+        <div style="font-size:16px;font-weight:600;color:${phase.color};">${phase.name}</div>
+        <div style="font-size:12px;color:var(--text3);">${phase.weeks}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:${phase.color};">${done}/${phase.topics.length}</div>
+        <div style="font-size:11px;color:var(--text3);">${pct}% complete</div>
+      </div>
+    </div>
+    <div class="prog-bar" style="margin-bottom:20px;"><div class="prog-fill" style="width:${pct}%;background:${phase.color};"></div></div>
+    ${phase.topics.map(t=>{
+      const d=aimlDone[t.day];
+      return `<div class="roadmap-item">
+        <div class="roadmap-day">Day ${t.day}</div>
+        <div class="roadmap-content">
+          <div class="roadmap-title" style="${d?'text-decoration:line-through;color:var(--text3);':''}">${t.title}</div>
+          <div class="roadmap-task">${t.task}</div>
+        </div>
+        <div class="roadmap-check ${d?'done':''}" onclick="toggleAiml(${t.day},this)">${d?'✓':''}</div>
+      </div>`;
+    }).join('')}`;
+  setTimeout(()=>renderAimlResources(),0);
+}
+function toggleAiml(day, el) {
+  if(!data.aimlDone) data.aimlDone={};
+  data.aimlDone[day]=!data.aimlDone[day];
+  save();
+  el.classList.toggle('done',data.aimlDone[day]);
+  el.textContent=data.aimlDone[day]?'✓':'';
+  el.previousElementSibling.querySelector('.roadmap-title').style.cssText=data.aimlDone[day]?'text-decoration:line-through;color:var(--text3);':'';
+  renderAiml();
+  toast(data.aimlDone[day]?'Topic completed! 🎉':'Marked as incomplete');
+}
+
+// ===================== APTITUDE =====================
+function renderAptitude() {
+  const aptLogs=data.aptLogs||[];
+  const todayLogs=aptLogs.filter(l=>l.dateKey===todayKey());
+  const todayQs=todayLogs.reduce((a,l)=>a+l.count,0);
+  const totalQs=aptLogs.reduce((a,l)=>a+l.count,0);
+  document.getElementById('apt-total').textContent=totalQs;
+  document.getElementById('apt-today').textContent=todayQs;
+  // streak
+  let streak=0;
+  const logDates=new Set(aptLogs.map(l=>l.dateKey));
+  const d=new Date(); let k=()=>`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  while(logDates.has(k())) { streak++; d.setDate(d.getDate()-1); }
+  document.getElementById('apt-streak').textContent=streak;
+  // topics done
+  const topicsDone=new Set(aptLogs.map(l=>l.topic)).size;
+  document.getElementById('apt-topics-done').textContent=Math.min(6,topicsDone);
+  // topics grid
+  const tg=document.getElementById('apt-topics-grid');
+  tg.innerHTML=APT_TOPICS.map(t=>{
+    const cnt=aptLogs.filter(l=>l.topic===t.name).reduce((a,l)=>a+l.count,0);
+    const done=cnt>=100;
+    return `<div class="topic-card" style="margin-bottom:10px;${done?'border-color:var(--green);':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div class="topic-name">${t.name}</div>
+          <div class="topic-count">${t.priority}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${done?'var(--green)':'var(--text2)'};">${cnt}</div>
+          <div style="font-size:10px;color:var(--text3);">qs done</div>
+        </div>
+      </div>
+      <div class="prog-bar" style="margin-top:8px;"><div class="prog-fill prog-amber" style="width:${Math.min(100,cnt/100*100)}%;"></div></div>
+    </div>`;
+  }).join('');
+  // log table
+  const tbody=document.getElementById('apt-log-table');
+  tbody.innerHTML=[...aptLogs].reverse().slice(0,20).map(l=>
+    `<tr>
+      <td style="font-size:12px;color:var(--text3);font-family:var(--mono);">${l.date}</td>
+      <td style="font-size:12px;">${l.topic}</td>
+      <td style="font-family:var(--mono);font-size:13px;color:var(--blue);">${l.count}</td>
+      <td style="font-size:12px;color:var(--text2);">${l.notes||'—'}</td>
+    </tr>`
+  ).join('');
+  // resources
+  const rg=document.getElementById('apt-resources');
+  rg.innerHTML=APT_TOPICS.flatMap(t=>t.resources.map(r=>
+    `<div class="card" style="padding:14px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">${t.name}</div>
+      <a href="${r.url}" target="_blank" style="color:var(--blue);font-size:13px;font-weight:500;text-decoration:none;">${r.title} →</a>
+    </div>`
+  )).join('');
+  // YouTube & documentation resources
+  const ytg=document.getElementById('apt-yt-resources');
+  ytg.innerHTML=APT_YT_RESOURCES.flatMap(g=>g.items.map(r=>
+    `<div class="card" style="padding:14px;">
+      <div style="font-size:10px;color:var(--accent);margin-bottom:4px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;">${g.cat}</div>
+      <a href="${r.url}" target="_blank" style="color:var(--blue);font-size:13px;font-weight:500;text-decoration:none;display:block;margin-bottom:4px;">${r.title} →</a>
+      <div style="font-size:11px;color:var(--text3);">${r.desc}</div>
+    </div>`
+  )).join('');
+}
+function logAptitude() {
+  const topic=document.getElementById('apt-log-topic').value;
+  const count=parseInt(document.getElementById('apt-log-count').value)||0;
+  const notes=document.getElementById('apt-log-notes').value;
+  if(!count) { toast('Enter number of questions!'); return; }
+  if(!data.aptLogs) data.aptLogs=[];
+  data.aptLogs.push({date:today(),dateKey:todayKey(),topic,count,notes});
+  save();
+  document.getElementById('apt-log-count').value='';
+  document.getElementById('apt-log-notes').value='';
+  renderAptitude();
+  toast(`Logged ${count} questions on ${topic}!`);
+}
+
+// ===================== DAILY LOG =====================
+function renderDaily() {
+  document.getElementById('log-date-display').textContent=today();
+  // load today's existing log
+  const logs=data.logs||[];
+  const existing=logs.find(l=>l.dateKey===todayKey());
+  if(existing) {
+    setToggle('tog-lc',existing.lc);
+    setToggle('tog-syntax',existing.syntax);
+    setToggle('tog-apt',existing.apt);
+    setToggle('tog-aiml',existing.aiml);
+    setToggle('tog-gh',existing.gh);
+    setToggle('tog-li',existing.li);
+    document.getElementById('lc-problem-name').value=existing.lcProblem||'';
+    document.getElementById('lc-problem-diff').value=existing.lcDiff||'Medium';
+    document.getElementById('log-notes').value=existing.notes||'';
+  }
+  updateLiveScore();
+  // schedule
+  const sl=document.getElementById('schedule-list');
+  sl.innerHTML=SCHEDULE.map(s=>`
+    <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:90px;">${s.time}</div>
+      <div style="width:4px;height:100%;border-radius:2px;background:${s.color};min-height:32px;flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;color:${s.color};">${s.task} <span style="font-family:var(--mono);font-size:11px;color:var(--text3);">+${s.pts}pt</span></div>
+        <div style="font-size:11px;color:var(--text2);">${s.detail}</div>
+      </div>
+    </div>
+  `).join('');
+  // history
+  renderLogHistory();
+}
+function setToggle(id,val) {
+  const el=document.getElementById(id);
+  if(val) el.classList.add('on'); else el.classList.remove('on');
+}
+function toggleTask(el) {
+  el.classList.toggle('on');
+  updateLiveScore();
+}
+function isOn(id) { return document.getElementById(id)?.classList.contains('on'); }
+function updateLiveScore() {
+  const s=(isOn('tog-lc')?3:0)+(isOn('tog-syntax')?2:0)+(isOn('tog-apt')?2:0)+(isOn('tog-aiml')?2:0)+(isOn('tog-gh')?1:0)+(isOn('tog-li')?1:0);
+  document.getElementById('live-score').textContent=s;
+  const l=scoreLevel(s);
+  document.getElementById('live-badge').innerHTML=`<span class="score-badge ${l.cls}">${l.label}</span>`;
+}
+function saveLog() {
+  const log={
+    date:today(), dateKey:todayKey(),
+    lc:isOn('tog-lc'), syntax:isOn('tog-syntax'), apt:isOn('tog-apt'),
+    aiml:isOn('tog-aiml'), gh:isOn('tog-gh'), li:isOn('tog-li'),
+    lcProblem:document.getElementById('lc-problem-name').value,
+    lcDiff:document.getElementById('lc-problem-diff').value,
+    notes:document.getElementById('log-notes').value,
+  };
+  if(!data.logs) data.logs=[];
+  const existing=data.logs.findIndex(l=>l.dateKey===todayKey());
+  if(existing>=0) data.logs[existing]=log;
+  else data.logs.push(log);
+  save();
+  renderLogHistory();
+  updateDashboard();
+  toast('Log saved! Keep grinding 🔥');
+}
+function clearLog() {
+  ['tog-lc','tog-syntax','tog-apt','tog-aiml','tog-gh','tog-li'].forEach(id=>setToggle(id,false));
+  setToggle('tog-lc',true);
+  document.getElementById('lc-problem-name').value='';
+  document.getElementById('log-notes').value='';
+  updateLiveScore();
+}
+function renderLogHistory() {
+  const logs=[...( data.logs||[])].reverse();
+  const tbody=document.getElementById('log-history-table');
+  tbody.innerHTML=logs.map(l=>{
+    const s=calcScore(l);
+    const lv=scoreLevel(s);
+    const ch=v=>v?`<span style="color:var(--green);font-size:14px;">✓</span>`:`<span style="color:var(--text3);font-size:14px;">—</span>`;
+    const dp={'Easy':'pill-easy','Medium':'pill-med','Hard':'pill-hard'}[l.lcDiff]||'pill-easy';
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--text2);">${l.date}</td>
+      <td style="font-size:12px;color:${l.lc?'var(--text)':'var(--text3)'};">${l.lcProblem||'—'}</td>
+      <td>${l.lcDiff?`<span class="pill ${dp}">${l.lcDiff}</span>`:'—'}</td>
+      <td style="text-align:center;">${ch(l.syntax)}</td>
+      <td style="text-align:center;">${ch(l.apt)}</td>
+      <td style="text-align:center;">${ch(l.aiml)}</td>
+      <td style="text-align:center;">${ch(l.gh)}</td>
+      <td style="text-align:center;">${ch(l.li)}</td>
+      <td style="font-family:var(--mono);font-weight:700;color:${s>=9?'var(--green)':s>=6?'var(--blue)':s>=3?'var(--amber)':'var(--red)'};">${s}/11</td>
+      <td><span class="score-badge ${lv.cls}">${lv.label}</span></td>
+      <td style="font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.notes||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================== LINKEDIN POST GENERATOR =====================
+function generateLinkedinPosts(){
+  const posts=[];
+  const hooks=['🚀','💡','📘','🧠','🔥','⚡','🎯','✨','📊','🛠️'];
+  const tags='#MachineLearning #DSA #LearningInPublic #90DaysOfCode #AI #DataScience #CodingJourney';
+  for(let d=1;d<=90;d++){
+    const aiDay=AIML_PHASES.flatMap(p=>p.topics).find(t=>t.day===d)||{title:'Review & Practice',task:'Revise week\'s concepts'};
+    const lcDay=LC_PROBLEMS.find(p=>p.day===d)||{name:'Practice Problem',diff:'Medium',topic:'Mixed'};
+    const hook=hooks[(d-1)%hooks.length];
+    const week=Math.ceil(d/7);
+    let type='aiml';
+    if(d%7===0) type='reflection';
+    else if(d%5===0) type='resource';
+    else if(d%2===0) type='dsa';
+    let body='';
+    if(type==='aiml'){
+      body=`${hook} Day ${d}/90 — Learning AI/ML in Public\n\nToday I studied: ${aiDay.title}\n\n✅ What I did:\n${aiDay.task}\n\n🧩 LeetCode: Solved "${lcDay.name}" (${lcDay.diff} — ${lcDay.topic})\n\nKey Takeaway: Understanding ${aiDay.title.toLowerCase()} is crucial for building real ML systems. Every concept you learn compounds over time.\n\n${tags}`;
+    } else if(type==='dsa'){
+      body=`${hook} Day ${d}/90 — DSA + AI/ML Challenge\n\n🧩 LeetCode Problem: ${lcDay.name}\n📌 Difficulty: ${lcDay.diff} | Topic: ${lcDay.topic}\n\nApproach:\n→ First tried brute force, then optimized\n→ Key pattern: ${lcDay.topic} technique\n\n📘 AI/ML Topic: ${aiDay.title}\n${aiDay.task}\n\nProgress: Day ${d} done ✅ ${90-d} to go!\n\n${tags}`;
+    } else if(type==='reflection'){
+      body=`${hook} Week ${week} Recap — 90-Day AI/ML + DSA Journey\n\n📊 This week\'s highlights:\n• Covered AI/ML topics from Day ${Math.max(1,d-6)} to Day ${d}\n• Solved ${Math.min(7,d)} LeetCode problems\n• Key focus area: ${lcDay.topic}\n\n💡 Biggest lesson this week:\nConsistency > Perfection. Even 1 hour of focused study compounds into mastery.\n\n🎯 Next week\'s plan:\n• Deep dive into ${aiDay.title}\n• Target: solve 7 more LC problems\n\nWhat did you learn this week? 👇\n\n${tags}`;
+    } else {
+      body=`${hook} Day ${d}/90 — Resource Drop 📚\n\nHere are resources that helped me today:\n\n📘 AI/ML Topic: ${aiDay.title}\n• StatQuest (YouTube) — Visual explanations\n• Scikit-learn docs — Implementation reference\n• Kaggle notebooks — Real-world examples\n\n🧩 DSA: ${lcDay.name} (${lcDay.diff})\n• NeetCode YouTube — Pattern-based solutions\n• LeetCode discuss — Community approaches\n\nBookmark these if you\'re on a similar journey! 🔖\n\n${tags}`;
+    }
+    posts.push({day:d,week,type,body,title:`Day ${d}: ${aiDay.title} + ${lcDay.name}`});
+  }
+  return posts;
+}
+const LINKEDIN_POSTS=generateLinkedinPosts();
+let liFiltered=[...LINKEDIN_POSTS];
+
+function renderLinkedin(){
+  if(!data.liPosted) data.liPosted={};
+  const posted=Object.values(data.liPosted).filter(v=>v).length;
+  document.getElementById('li-posted').textContent=posted;
+  document.getElementById('li-total').textContent=90;
+  const nextDay=posted+1;
+  document.getElementById('li-today-label').textContent=nextDay<=90?`Day ${nextDay}`:'Done!';
+  let streak=0;
+  for(let i=posted;i>=1;i--){if(data.liPosted[i])streak++;else break;}
+  document.getElementById('li-streak').textContent=streak;
+  renderLinkedinPosts(liFiltered);
+}
+function renderLinkedinPosts(posts){
+  const container=document.getElementById('li-posts-list');
+  container.innerHTML=posts.map(p=>{
+    const posted=data.liPosted&&data.liPosted[p.day];
+    const typeColors={aiml:'var(--purple)',dsa:'var(--green)',reflection:'var(--amber)',resource:'var(--blue)'};
+    const typeLabels={aiml:'AI/ML',dsa:'DSA',reflection:'Weekly Recap',resource:'Resource Share'};
+    return `<div class="card" style="margin-bottom:16px;${posted?'opacity:0.6;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--text3);">Day ${p.day}</span>
+          <span class="pill" style="background:${typeColors[p.type]}22;color:${typeColors[p.type]};">${typeLabels[p.type]}</span>
+          ${posted?'<span class="pill pill-easy">✓ Posted</span>':''}
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm btn-ghost" onclick="copyPost(${p.day})">📋 Copy</button>
+          <button class="btn btn-sm ${posted?'btn-ghost':'btn-primary'}" onclick="markPosted(${p.day})">${posted?'Undo':'Mark Posted'}</button>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${p.title}</div>
+      <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;font-family:var(--sans);font-size:12px;color:var(--text2);white-space:pre-wrap;word-wrap:break-word;line-height:1.6;max-height:200px;overflow-y:auto;">${p.body}</pre>
+    </div>`;
+  }).join('');
+}
+function filterLinkedin(){
+  const week=document.getElementById('li-filter-week').value;
+  const type=document.getElementById('li-filter-type').value;
+  liFiltered=LINKEDIN_POSTS.filter(p=>{
+    const wk=week?p.week>=parseInt(week)&&p.week<parseInt(week)+2:true;
+    return wk&&(!type||p.type===type);
+  });
+  renderLinkedinPosts(liFiltered);
+}
+function copyPost(day){
+  const post=LINKEDIN_POSTS.find(p=>p.day===day);
+  if(post){navigator.clipboard.writeText(post.body).then(()=>toast('Post copied to clipboard! 📋'));}
+}
+function markPosted(day){
+  if(!data.liPosted)data.liPosted={};
+  data.liPosted[day]=!data.liPosted[day];
+  save();
+  renderLinkedin();
+  toast(data.liPosted[day]?'Marked as posted! 🎉':'Unmarked');
+}
+
+// ===================== AIML RESOURCES (rendered in AI/ML page) =====================
+function renderAimlResources(){
+  const phase=AIML_PHASES[currentAimlPhase];
+  const container=document.getElementById('aiml-phase-content');
+  const existing=container.innerHTML;
+  container.innerHTML=existing+`
+    <div class="divider"></div>
+    <div class="section-title"><span class="dot dot-blue"></span> Learning Resources</div>
+    <div class="grid-3">
+    ${AIML_RESOURCES.flatMap(g=>g.items.map(r=>
+      `<div class="card" style="padding:14px;">
+        <div style="font-size:10px;color:var(--accent);margin-bottom:4px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;">${g.cat}</div>
+        <a href="${r.url}" target="_blank" style="color:var(--blue);font-size:13px;font-weight:500;text-decoration:none;display:block;margin-bottom:4px;">${r.title} →</a>
+        <div style="font-size:11px;color:var(--text3);">${r.desc}</div>
+      </div>`
+    )).join('')}
+    </div>`;
+}
+
+// ===================== EXPORT / IMPORT =====================
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`devpath-backup-${todayKey()}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  data.lastBackup=Date.now(); save();
+  toast('Data exported! Keep this file safe 💾');
+}
+function importData(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try {
+      const imported=JSON.parse(ev.target.result);
+      if(imported.logs||imported.lcStatus||imported.aimlDone){
+        data=imported; save();
+        toast('Data imported successfully! 🎉');
+        updateDashboard(); location.reload();
+      } else { toast('Invalid backup file ❌'); }
+    } catch(err){ toast('Error reading file ❌'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// ===================== POMODORO TIMER =====================
+let pomoInterval=null, pomoSeconds=25*60, pomoRunning=false;
+function startPomo(){
+  document.getElementById('pomo-overlay').classList.add('active');
+  pomoReset();
+}
+function pomoClose(){
+  document.getElementById('pomo-overlay').classList.remove('active');
+  if(pomoInterval) clearInterval(pomoInterval);
+  pomoRunning=false;
+}
+function pomoToggle(){
+  if(pomoRunning){
+    clearInterval(pomoInterval); pomoRunning=false;
+    document.getElementById('pomo-start').textContent='▶ Resume';
+  } else {
+    pomoRunning=true;
+    document.getElementById('pomo-start').textContent='⏸ Pause';
+    pomoInterval=setInterval(()=>{
+      pomoSeconds--;
+      if(pomoSeconds<=0){
+        clearInterval(pomoInterval); pomoRunning=false;
+        document.getElementById('pomo-time').textContent='00:00';
+        document.getElementById('pomo-label').textContent='🎉 Session Complete!';
+        document.getElementById('pomo-start').textContent='▶ Start';
+        try{ new Audio('data:audio/wav;base64,UklGRl9vT19teleVBQQEBBAAAAA=').play(); }catch(e){}
+        toast('Pomodoro complete! Take a 5-min break 🍅');
+        pomoSeconds=25*60; return;
+      }
+      const m=Math.floor(pomoSeconds/60), s=pomoSeconds%60;
+      document.getElementById('pomo-time').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    },1000);
+  }
+}
+function pomoReset(){
+  if(pomoInterval) clearInterval(pomoInterval);
+  pomoRunning=false; pomoSeconds=25*60;
+  document.getElementById('pomo-time').textContent='25:00';
+  document.getElementById('pomo-label').textContent='Focus Session';
+  document.getElementById('pomo-start').textContent='▶ Start';
+}
+
+// ===================== HEATMAP =====================
+function renderHeatmap(){
+  const container=document.getElementById('heatmap');
+  const logs=data.logs||[];
+  const logMap={};
+  logs.forEach(l=>{ logMap[l.dateKey]=calcScore(l); });
+  container.innerHTML='';
+  const d=new Date(); d.setDate(d.getDate()-89);
+  for(let i=0;i<90;i++){
+    const key=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    const score=logMap[key]||0;
+    const lvl=score>=9?4:score>=6?3:score>=3?2:score>=1?1:0;
+    const dateStr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    const cell=document.createElement('div');
+    cell.className=`hm-cell ${lvl?'hm-'+lvl:''}`;
+    cell.setAttribute('data-tip',`${dateStr}: ${score}pts`);
+    container.appendChild(cell);
+    d.setDate(d.getDate()+1);
+  }
+}
+
+// ===================== SMART DAILY SUGGESTION =====================
+function renderDailySuggestion(){
+  const el=document.getElementById('daily-suggest');
+  const studyDay=getStudyDay();
+  const onBreak=isOnExamBreak();
+  const journeyPct=getJourneyProgress();
+  const daysLeft=getDaysUntilEnd();
+
+  // EXAM BREAK MODE
+  if(onBreak){
+    const breakEnd=JOURNEY.examBreak.end;
+    const daysToResume=Math.ceil((breakEnd-new Date())/86400000);
+    el.innerHTML=`
+      <div style="text-align:center;padding:20px 0;">
+        <div style="font-size:40px;margin-bottom:12px;">📚</div>
+        <div style="font-size:20px;font-weight:700;margin-bottom:8px;">Exam Break Mode</div>
+        <div style="font-size:14px;color:var(--text2);margin-bottom:16px;">Focus on your exams! Your progress is safely saved.</div>
+        <div style="display:flex;justify-content:center;gap:20px;">
+          <div style="background:var(--bg2);border-radius:10px;padding:14px 24px;">
+            <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--amber);">${daysToResume}</div>
+            <div style="font-size:11px;color:var(--text3);">days until resume</div>
+          </div>
+          <div style="background:var(--bg2);border-radius:10px;padding:14px 24px;">
+            <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--green);">${breakEnd.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</div>
+            <div style="font-size:11px;color:var(--text3);">resume date</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:14px;">Break: 20 Apr – 20 May 2026 | Your streak & data are preserved</div>
+      </div>`;
+    return;
+  }
+
+  const aimlDone=data.aimlDone||{};
+  const allTopics=AIML_PHASES.flatMap(p=>p.topics);
+  const nextAiml=allTopics.find(t=>!aimlDone[t.day])||allTopics[allTopics.length-1];
+  const phase=AIML_PHASES.find(p=>p.topics.includes(nextAiml))||AIML_PHASES[0];
+  const lcStatus=data.lcStatus||{};
+  const nextLC=LC_PROBLEMS.find(p=>!lcStatus[p.day]||lcStatus[p.day]==='Not Started')||LC_PROBLEMS[0];
+  const todayLog=(data.logs||[]).find(l=>l.dateKey===todayKey());
+  const todayScore=todayLog?calcScore(todayLog):0;
+  const totalDone=Object.values(aimlDone).filter(v=>v).length;
+  const pct=Math.round(totalDone/allTopics.length*100);
+  const daysSinceBackup=data.lastBackup?Math.floor((Date.now()-data.lastBackup)/86400000):999;
+  const backupWarn=daysSinceBackup>=7?`<div style="margin-top:12px;padding:10px 14px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.25);border-radius:10px;font-size:12px;color:var(--amber);">⚠️ Last backup: ${daysSinceBackup===999?'Never':daysSinceBackup+' days ago'} — <a href="#" onclick="exportData();return false" style="color:var(--amber);text-decoration:underline;">Export now</a></div>`:'';
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="font-size:18px;">🎯</span>
+      <span style="font-size:15px;font-weight:600;">Today's Focus — Study Day ${studyDay}</span>
+      <span class="score-badge ${todayScore>=6?'score-good':'score-weak'}" style="margin-left:auto;">${todayScore>0?todayScore+'/11 today':'Not started'}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:var(--bg2);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">AI/ML — Day ${nextAiml.day} / ${phase.name}</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">${nextAiml.title}</div>
+        <div style="font-size:11px;color:var(--text2);">${nextAiml.task}</div>
+        <div class="prog-bar" style="margin-top:8px;"><div class="prog-fill" style="width:${pct}%;background:var(--accent);"></div></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;">${totalDone}/${allTopics.length} topics done (${pct}%)</div>
+      </div>
+      <div style="background:var(--bg2);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">LeetCode — Day ${nextLC.day}</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">${nextLC.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="pill ${{Easy:'pill-easy',Medium:'pill-med',Hard:'pill-hard'}[nextLC.diff]}">${nextLC.diff}</span>
+          <span style="font-size:11px;color:var(--text2);">${nextLC.topic}</span>
+        </div>
+        <a class="lc-link" href="${nextLC.link}" target="_blank" style="display:block;margin-top:8px;">Open on LeetCode →</a>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
+      <div class="prog-bar" style="flex:1;"><div class="prog-fill" style="width:${journeyPct}%;background:linear-gradient(90deg,var(--accent),var(--green));"></div></div>
+      <span style="font-size:11px;color:var(--text3);white-space:nowrap;">${journeyPct}% of 2-year journey · ${daysLeft} days left</span>
+    </div>${backupWarn}`;
+}
+
+// ===================== INIT =====================
+document.getElementById('nav-date').textContent=today();
+setToggle('tog-lc', true);
+updateLiveScore();
+updateDashboard();
+renderLCTable();
+renderDailySuggestion();
+renderHeatmap();
+</script>
+</body>
+</html>
