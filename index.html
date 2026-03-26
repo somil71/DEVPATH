@@ -248,7 +248,10 @@
   }
 
   /* HEATMAP */
-  .heatmap { display:flex; gap:3px; flex-wrap:wrap; }
+  .heatmap { display:flex; gap:25px; flex-wrap:wrap; margin-top:15px; }
+  .hm-month { min-width:116px; }
+  .hm-month-label { font-size:10px; color:var(--accent); margin-bottom:10px; font-family:var(--mono); font-weight:700; letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:4px; }
+  .hm-days-grid { display:grid; grid-template-columns:repeat(7,14px); gap:4px; }
   .hm-cell {
     width:14px; height:14px; border-radius:3px; background:var(--bg4);
     cursor:pointer; position:relative;
@@ -417,7 +420,7 @@
 
   <!-- ACTIVITY HEATMAP -->
   <div class="card" style="margin-top:20px;">
-    <div class="section-title"><span class="dot dot-green"></span> Activity Heatmap (Last 90 Days)</div>
+    <div class="section-title"><span class="dot dot-green"></span> Activity Highlights (Mar – Jul 2026)</div>
     <div class="heatmap" id="heatmap"></div>
     <div style="display:flex;align-items:center;gap:6px;margin-top:10px;">
       <span style="font-size:10px;color:var(--text3);">Less</span>
@@ -1362,7 +1365,10 @@ const SCHEDULE = [
 
 // ===================== UTILS =====================
 function today() { return new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
-function todayKey() { const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+function todayKey(date) { 
+  const d = date || new Date(); 
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; 
+}
 function toast(msg) {
   const t=document.getElementById('toast'); t.textContent=msg;
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
@@ -1448,20 +1454,30 @@ function updateDashboard() {
     </div>`;
   }).join('');
   // score chart
+  // score chart (Fixed: Last 14 calendar days)
   const chart=document.getElementById('score-chart');
-  const last14=logs.slice(-14);
   chart.innerHTML='';
-  for(let i=0;i<14;i++) {
-    const log=last14[i];
-    const s=log?calcScore(log):0;
-    const h=log?Math.max(6,s/11*60):3;
-    const c=s>=9?'var(--accent)':s>=6?'var(--green)':s>=3?'var(--amber)':'var(--bg4)';
-    const bar=document.createElement('div');
-    bar.className='mini-bar';
-    bar.style.cssText=`height:${h}px;background:${c};`;
-    bar.setAttribute('data-tip',log?`${log.date}: ${s}pts`:`Day ${i+1}`);
-    chart.appendChild(bar);
+  const logMap = {};
+  logs.forEach(l => { logMap[l.dateKey] = l; });
+  
+  const tempDate = new Date();
+  const bars = [];
+  
+  for(let i=0; i<14; i++) {
+    const key = todayKey(tempDate);
+    const log = logMap[key];
+    const s = log ? calcScore(log) : 0;
+    const h = Math.max(6, s/11 * 60);
+    const c = s>=9 ? 'var(--accent)' : s>=6 ? 'var(--green)' : s>=3 ? 'var(--amber)' : 'var(--bg4)';
+    
+    const bar = document.createElement('div');
+    bar.className = 'mini-bar';
+    bar.style.cssText = `height:${h}px;background:${c};`;
+    bar.setAttribute('data-tip', `${todayKey(tempDate)}: ${s}pts`);
+    bars.unshift(bar); // Newer days on the right
+    tempDate.setDate(tempDate.getDate() - 1);
   }
+  bars.forEach(b => chart.appendChild(b));
   // task breakdown
   const taskBreak=document.getElementById('task-breakdown');
   const tasks=[
@@ -1992,22 +2008,59 @@ function pomoReset(){
 
 // ===================== HEATMAP =====================
 function renderHeatmap(){
-  const container=document.getElementById('heatmap');
-  const logs=data.logs||[];
-  const logMap={};
-  logs.forEach(l=>{ logMap[l.dateKey]=calcScore(l); });
-  container.innerHTML='';
-  const d=new Date(); d.setDate(d.getDate()-89);
-  for(let i=0;i<90;i++){
-    const key=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-    const score=logMap[key]||0;
-    const lvl=score>=9?4:score>=6?3:score>=3?2:score>=1?1:0;
-    const dateStr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
-    const cell=document.createElement('div');
-    cell.className=`hm-cell ${lvl?'hm-'+lvl:''}`;
-    cell.setAttribute('data-tip',`${dateStr}: ${score}pts`);
-    container.appendChild(cell);
-    d.setDate(d.getDate()+1);
+  const container = document.getElementById('heatmap');
+  const logs = data.logs || [];
+  const logMap = {};
+  logs.forEach(l => { logMap[l.dateKey] = calcScore(l); });
+
+  container.innerHTML = '';
+  
+  const journeyStart = new Date(JOURNEY.startDate);
+  journeyStart.setHours(0,0,0,0);
+  
+  // Start from the 1st of the month of the journey start
+  let curr = new Date(journeyStart.getFullYear(), journeyStart.getMonth(), 1);
+  const heatmapEnd = new Date(2026, 6, 31); // July 31, 2026
+
+  while(curr <= heatmapEnd) {
+    const month = curr.getMonth();
+    const year = curr.getFullYear();
+    
+    const monthBox = document.createElement('div');
+    monthBox.className = 'hm-month';
+    
+    const mLabel = document.createElement('div');
+    mLabel.className = 'hm-month-label';
+    mLabel.textContent = curr.toLocaleDateString('en-IN', {month:'short', year:'numeric'});
+    monthBox.appendChild(mLabel);
+    
+    const daysGrid = document.createElement('div');
+    daysGrid.className = 'hm-days-grid';
+    
+    // Optional: add empty cells for alignment if needed, but a simple grid is better for space
+    // Let's just render all days of the month
+    while(curr <= heatmapEnd && curr.getMonth() === month) {
+      if(curr < journeyStart) {
+        // Skip days before journey start but keep them as empty space? 
+        // No, let's just start from journey start day for a cleaner look.
+        curr.setDate(curr.getDate() + 1);
+        continue;
+      }
+      
+      const key = todayKey(curr);
+      const score = logMap[key] || 0;
+      const lvl = score >= 9 ? 4 : score >= 6 ? 3 : score >= 3 ? 2 : score >= 1 ? 1 : 0;
+      
+      const cell = document.createElement('div');
+      cell.className = `hm-cell ${lvl ? 'hm-' + lvl : ''}`;
+      cell.setAttribute('data-tip', `${curr.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'})}: ${score}pts`);
+      daysGrid.appendChild(cell);
+      
+      curr.setDate(curr.getDate() + 1);
+    }
+    
+    monthBox.appendChild(daysGrid);
+    container.appendChild(monthBox);
   }
 }
 
